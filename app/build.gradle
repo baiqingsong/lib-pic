@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.dawn.libserial'
+    namespace 'com.dawn.libpic'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.dawn.libserial"
+        applicationId "com.dawn.libpic"
         minSdk 28
         targetSdk 34
         versionCode 1

@@ -33,6 +33,12 @@
         android:layout_height="wrap_content"
         android:text="选择 PNG 图片并处理" />
 
+    <Button
+        android:id="@+id/testButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="加载内置测试图片 (cs.png)" />
+
     <!-- 进度条（处理时显示） -->
     <ProgressBar
         android:id="@+id/progressBar"

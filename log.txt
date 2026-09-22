@@ -1,0 +1,62 @@
+---------------------------- PROCESS ENDED (3074) for package com.dawn.libpic ----------------------------
+2026-09-22 23:37:53.052  1428-1428  监听app安装                 com.ztl.helper                       E  com.dawn.libpic
+2026-09-22 23:37:53.651   448-473   AppOps                  system_server                        E  startOperation
+                                                                                                    java.lang.SecurityException: Specified package com.dawn.libpic under uid 1000 but it is really 10120
+                                                                                                    	at com.android.server.appop.AppOpsService.verifyAndGetBypass(AppOpsService.java:3945)
+                                                                                                    	at com.android.server.appop.AppOpsService.startOperation(AppOpsService.java:3469)
+                                                                                                    	at android.app.AppOpsManager.startOpNoThrow(AppOpsManager.java:8088)
+                                                                                                    	at com.android.server.wm.WindowState.initAppOpsState(WindowState.java:3090)
+                                                                                                    	at com.android.server.wm.WindowManagerService.addWindow(WindowManagerService.java:1650)
+                                                                                                    	at com.android.server.wm.Session.addToDisplayAsUser(Session.java:176)
+                                                                                                    	at android.view.ViewRootImpl.setView(ViewRootImpl.java:1031)
+                                                                                                    	at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:409)
+                                                                                                    	at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:109)
+                                                                                                    	at com.android.server.policy.PhoneWindowManager.addSplashScreen(PhoneWindowManager.java:2558)
+                                                                                                    	at com.android.server.wm.SplashScreenStartingData.createStartingSurface(SplashScreenStartingData.java:56)
+                                                                                                    	at com.android.server.wm.ActivityRecord$AddStartingWindow.run(ActivityRecord.java:1885)
+                                                                                                    	at android.os.Handler.handleCallback(Handler.java:938)
+                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:99)
+                                                                                                    	at android.os.Looper.loop(Looper.java:223)
+                                                                                                    	at android.os.HandlerThread.run(HandlerThread.java:67)
+                                                                                                    	at com.android.server.ServiceThread.run(ServiceThread.java:44)
+---------------------------- PROCESS STARTED (3219) for package com.dawn.libpic ----------------------------
+2026-09-22 23:37:54.156  3219-3219  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
+2026-09-22 23:37:54.158  3219-3219  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
+2026-09-22 23:37:54.326  3219-3219  AppCompatDelegate       com.dawn.libpic                      D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
+2026-09-22 23:37:54.970  3219-3244  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1311; [Func] : base_context_deal_with_version_affairs_rk_ext;
+                                                                                                    arm_release_ver of this mali_so is 'g2p0-01eac0', rk_so_ver is '8@0 '.
+2026-09-22 23:37:54.970  3219-3244  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1327; [Func] : base_context_deal_with_version_affairs_rk_ext;
+                                                                                                    arm_release_vers are match. to set the full mali_ver 'g2p0-01eac0-x-8@0' as value of 'sys.gmali.version'.
+2026-09-22 23:37:54.968  3219-3219  RenderThread            com.dawn.libpic                      I  type=1400 audit(0.0:7991): avc: denied { write } for name="property_service" dev="tmpfs" ino=11854 scontext=u:r:untrusted_app:s0:c120,c256,c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=1 app=com.dawn.libpic
+2026-09-22 23:38:19.662  3219-3219  Compatibil...geReporter com.dawn.libpic                      D  Compat change id reported: 147798919; UID 10120; state: ENABLED
+---------------------------- PROCESS ENDED (3219) for package com.dawn.libpic ----------------------------
+2026-09-22 23:42:05.363   448-473   AppOps                  system_server                        E  startOperation
+                                                                                                    java.lang.SecurityException: Specified package com.dawn.libpic under uid 1000 but it is really 10120
+                                                                                                    	at com.android.server.appop.AppOpsService.verifyAndGetBypass(AppOpsService.java:3945)
+                                                                                                    	at com.android.server.appop.AppOpsService.startOperation(AppOpsService.java:3469)
+                                                                                                    	at android.app.AppOpsManager.startOpNoThrow(AppOpsManager.java:8088)
+                                                                                                    	at com.android.server.wm.WindowState.initAppOpsState(WindowState.java:3090)
+                                                                                                    	at com.android.server.wm.WindowManagerService.addWindow(WindowManagerService.java:1650)
+                                                                                                    	at com.android.server.wm.Session.addToDisplayAsUser(Session.java:176)
+                                                                                                    	at android.view.ViewRootImpl.setView(ViewRootImpl.java:1031)
+                                                                                                    	at android.view.WindowManagerGlobal.addView(WindowManagerGlobal.java:409)
+                                                                                                    	at android.view.WindowManagerImpl.addView(WindowManagerImpl.java:109)
+                                                                                                    	at com.android.server.policy.PhoneWindowManager.addSplashScreen(PhoneWindowManager.java:2558)
+                                                                                                    	at com.android.server.wm.SplashScreenStartingData.createStartingSurface(SplashScreenStartingData.java:56)
+                                                                                                    	at com.android.server.wm.ActivityRecord$AddStartingWindow.run(ActivityRecord.java:1885)
+                                                                                                    	at android.os.Handler.handleCallback(Handler.java:938)
+                                                                                                    	at android.os.Handler.dispatchMessage(Handler.java:99)
+                                                                                                    	at android.os.Looper.loop(Looper.java:223)
+                                                                                                    	at android.os.HandlerThread.run(HandlerThread.java:67)
+                                                                                                    	at com.android.server.ServiceThread.run(ServiceThread.java:44)
+---------------------------- PROCESS STARTED (3335) for package com.dawn.libpic ----------------------------
+2026-09-22 23:42:07.435  3335-3351  System                  com.dawn.libpic                      W  A resource failed to call close. 
+2026-09-22 23:42:07.753  3335-3335  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
+2026-09-22 23:42:07.755  3335-3335  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
+2026-09-22 23:42:07.933  3335-3335  AppCompatDelegate       com.dawn.libpic                      D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
+2026-09-22 23:42:08.584  3335-3360  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1311; [Func] : base_context_deal_with_version_affairs_rk_ext;
+                                                                                                    arm_release_ver of this mali_so is 'g2p0-01eac0', rk_so_ver is '8@0 '.
+2026-09-22 23:42:08.584  3335-3360  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1327; [Func] : base_context_deal_with_version_affairs_rk_ext;
+                                                                                                    arm_release_vers are match. to set the full mali_ver 'g2p0-01eac0-x-8@0' as value of 'sys.gmali.version'.
+2026-09-22 23:42:08.580  3335-3335  RenderThread            com.dawn.libpic                      I  type=1400 audit(0.0:8759): avc: denied { write } for name="property_service" dev="tmpfs" ino=11854 scontext=u:r:untrusted_app:s0:c120,c256,c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=1 app=com.dawn.libpic
+2026-09-22 23:42:44.316  3335-3335  Compatibil...geReporter com.dawn.libpic                      D  Compat change id reported: 147798919; UID 10120; state: ENABLED

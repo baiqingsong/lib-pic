@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.dawn.serial'
+    namespace 'com.dawn.pic'
     compileSdk 34
 
     defaultConfig {

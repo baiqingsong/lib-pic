@@ -13,9 +13,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 /**
@@ -36,6 +34,10 @@ public class PngAnalyzer {
     // 相邻判定：两区域间无透明像素的最大连续列/行数（像素）
     private static final int ADJACENT_GAP = 30;
 
+    private static boolean isTransparent(int pixel) {
+        return ((pixel >> 24) & 0xFF) <= TRANSPARENT_ALPHA_THRESHOLD;
+    }
+
     /**
      * 在位图中找出所有透明区域，返回列表，每项为 int[]{x, y, width, height}。
      * 流程：生成透明 mask → DFS 找连通区 → 过滤小噪点 → 合并重叠 → 合并相邻小区域 → 排序。
@@ -47,24 +49,17 @@ public class PngAnalyzer {
         int[] pixels = new int[width * height];
         bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
 
-        // 生成透明 mask：true = 透明像素
-        boolean[] mask = new boolean[width * height];
-        for (int i = 0; i < pixels.length; i++) {
-            int alpha = (pixels[i] >> 24) & 0xFF;
-            if (alpha <= TRANSPARENT_ALPHA_THRESHOLD) {
-                mask[i] = true;
-            }
-        }
-
         // DFS 找连通区域，过滤 100x100 以下的噪点
         boolean[] visited = new boolean[width * height];
+        // 预分配 DFS 栈，避免每次 DFS 创建新对象；入栈即标记可确保每个像素最多入栈一次
+        int[] dfsStack = new int[width * height];
         List<int[]> areas = new ArrayList<>();
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int idx = y * width + x;
-                if (!visited[idx] && mask[idx]) {
-                    int[] bounds = dfs(x, y, mask, visited, width, height);
+                if (!visited[idx] && isTransparent(pixels[idx])) {
+                    int[] bounds = dfs(x, y, pixels, visited, width, height, dfsStack);
                     int w = bounds[2] - bounds[0] + 1;
                     int h = bounds[3] - bounds[1] + 1;
                     if (w >= 100 && h >= 100) {
@@ -78,7 +73,7 @@ public class PngAnalyzer {
         areas = mergeOverlapping(areas);
 
         // 合并相邻的过小区域
-        areas = mergeAdjacentSmall(areas, mask, width, height);
+        areas = mergeAdjacentSmall(areas, pixels, width, height);
 
         // 先按 y 再按 x 排序（从上到下、从左到右）
         areas.sort((a, b) -> a[1] != b[1] ? a[1] - b[1] : a[0] - b[0]);
@@ -88,19 +83,19 @@ public class PngAnalyzer {
 
     /**
      * 非递归 DFS 找连通透明区域，返回包围盒 int[]{minX, minY, maxX, maxY}。
+     * 使用预分配的原始 int[] 栈（入栈即标记），避免 Integer 装箱与重复入栈。
      */
-    private static int[] dfs(int startX, int startY, boolean[] mask, boolean[] visited, int width, int height) {
-        Deque<Integer> stack = new ArrayDeque<>();
-        stack.push(startY * width + startX);
+    private static int[] dfs(int startX, int startY, int[] pixels, boolean[] visited,
+                              int width, int height, int[] stack) {
+        int top = 0;
+        int startPos = startY * width + startX;
+        visited[startPos] = true;
+        stack[top++] = startPos;
 
         int minX = startX, maxX = startX, minY = startY, maxY = startY;
-        int[][] dirs = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
 
-        while (!stack.isEmpty()) {
-            int pos = stack.pop();
-            if (visited[pos]) continue;
-            visited[pos] = true;
-
+        while (top > 0) {
+            int pos = stack[--top];
             int cx = pos % width;
             int cy = pos / width;
             if (cx < minX) minX = cx;
@@ -108,16 +103,14 @@ public class PngAnalyzer {
             if (cy < minY) minY = cy;
             if (cy > maxY) maxY = cy;
 
-            for (int[] dir : dirs) {
-                int nx = cx + dir[0];
-                int ny = cy + dir[1];
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-                    int npos = ny * width + nx;
-                    if (!visited[npos] && mask[npos]) {
-                        stack.push(npos);
-                    }
-                }
-            }
+            // 右
+            if (cx + 1 < width)  { int np = pos + 1;     if (!visited[np] && isTransparent(pixels[np])) { visited[np] = true; stack[top++] = np; } }
+            // 左
+            if (cx - 1 >= 0)     { int np = pos - 1;     if (!visited[np] && isTransparent(pixels[np])) { visited[np] = true; stack[top++] = np; } }
+            // 下
+            if (cy + 1 < height) { int np = pos + width; if (!visited[np] && isTransparent(pixels[np])) { visited[np] = true; stack[top++] = np; } }
+            // 上
+            if (cy - 1 >= 0)     { int np = pos - width; if (!visited[np] && isTransparent(pixels[np])) { visited[np] = true; stack[top++] = np; } }
         }
 
         return new int[]{minX, minY, maxX, maxY};
@@ -169,13 +162,13 @@ public class PngAnalyzer {
      * 水平方向：统计 x ∈ [x0, x1) 范围内，
      * 最长的「不含透明像素」的连续列数（即断点宽度）。
      */
-    private static int maxTransparentBreakH(boolean[] mask, int width, int height,
+    private static int maxTransparentBreakH(int[] pixels, int width, int height,
                                             int x0, int x1, int y0, int y1) {
         int run = 0, maxRun = 0;
         for (int x = x0; x < x1; x++) {
             boolean hasTrans = false;
             for (int y = y0; y <= y1; y++) {
-                if (y >= 0 && y < height && x >= 0 && x < width && mask[y * width + x]) {
+                if (y >= 0 && y < height && x >= 0 && x < width && isTransparent(pixels[y * width + x])) {
                     hasTrans = true;
                     break;
                 }
@@ -194,13 +187,13 @@ public class PngAnalyzer {
      * 垂直方向：统计 y ∈ [y0, y1) 范围内，
      * 最长的「不含透明像素」的连续行数（即断点高度）。
      */
-    private static int maxTransparentBreakV(boolean[] mask, int width, int height,
+    private static int maxTransparentBreakV(int[] pixels, int width, int height,
                                             int y0, int y1, int x0, int x1) {
         int run = 0, maxRun = 0;
         for (int y = y0; y < y1; y++) {
             boolean hasTrans = false;
             for (int x = x0; x <= x1; x++) {
-                if (x >= 0 && x < width && y >= 0 && y < height && mask[y * width + x]) {
+                if (x >= 0 && x < width && y >= 0 && y < height && isTransparent(pixels[y * width + x])) {
                     hasTrans = true;
                     break;
                 }
@@ -219,7 +212,7 @@ public class PngAnalyzer {
      * 合并相邻的过小区域：若小区域面积 < 大区域面积 * SMALL_AREA_RATIO
      * 且两区域之间透明像素断点 <= ADJACENT_GAP，则将小区域并入大区域。
      */
-    private static List<int[]> mergeAdjacentSmall(List<int[]> areas, boolean[] mask,
+    private static List<int[]> mergeAdjacentSmall(List<int[]> areas, int[] pixels,
                                                    int width, int height) {
         areas.sort((a, b) -> (b[2] * b[3]) - (a[2] * a[3]));
         int n = areas.size();
@@ -248,7 +241,7 @@ public class PngAnalyzer {
                         int gapHi = b[0] < cur[0] ? cur[0] : b[0];
                         int y0 = Math.max(cur[1], b[1]);
                         int y1 = Math.min(cur[1] + cur[3], b[1] + b[3]) - 1;
-                        if (maxTransparentBreakH(mask, width, height, gapLo, gapHi, y0, y1) <= ADJACENT_GAP) {
+                        if (maxTransparentBreakH(pixels, width, height, gapLo, gapHi, y0, y1) <= ADJACENT_GAP) {
                             merged = true;
                         }
                     }
@@ -258,7 +251,7 @@ public class PngAnalyzer {
                         int gapHi = b[1] < cur[1] ? cur[1] : b[1];
                         int x0 = Math.max(cur[0], b[0]);
                         int x1 = Math.min(cur[0] + cur[2], b[0] + b[2]) - 1;
-                        if (maxTransparentBreakV(mask, width, height, gapLo, gapHi, x0, x1) <= ADJACENT_GAP) {
+                        if (maxTransparentBreakV(pixels, width, height, gapLo, gapHi, x0, x1) <= ADJACENT_GAP) {
                             merged = true;
                         }
                     }
@@ -297,7 +290,6 @@ public class PngAnalyzer {
         data.put("bgCover", "0");
         data.put("isCut", isDouble ? "0" : "1");
         data.put("rotation", landscape ? "90" : "0");
-        data.put("photograph", areas.size());
         // 输出时统一以竖向尺寸表示（短边为 width，长边为 height）
         data.put("width", landscape ? imgH : imgW);
         data.put("height", landscape ? imgW : imgH);
@@ -305,24 +297,46 @@ public class PngAnalyzer {
         JSONArray items = new JSONArray();
 
         if (isDouble) {
-            // 双份：两两配对，生成带 left_2/top_2 的 item
-            for (int i = 0; i + 1 < areas.size(); i += 2) {
+            // 按尺寸相近（宽高各误差 ≤ 20%）进行配对，避免把大小悬殊的区域强行配对
+            boolean[] used = new boolean[areas.size()];
+            int itemIdx = 0;
+            for (int i = 0; i < areas.size(); i++) {
+                if (used[i]) continue;
+                used[i] = true;
                 int[] a1 = areas.get(i);
-                int[] a2 = areas.get(i + 1);
+
+                int matchJ = -1;
+                for (int j = i + 1; j < areas.size(); j++) {
+                    if (used[j]) continue;
+                    int[] a2 = areas.get(j);
+                    float wRatio = (float) Math.min(a1[2], a2[2]) / Math.max(a1[2], a2[2]);
+                    float hRatio = (float) Math.min(a1[3], a2[3]) / Math.max(a1[3], a2[3]);
+                    if (wRatio >= 0.8f && hRatio >= 0.8f) {
+                        matchJ = j;
+                        break;
+                    }
+                }
+
                 JSONObject item = new JSONObject();
-                item.put("index", i / 2);
-                item.put("left",   landscape ? (imgH - a1[1] - a1[3]) : a1[0]);
-                item.put("top",    landscape ? a1[0] : a1[1]);
-                item.put("left_2", landscape ? (imgH - a2[1] - a2[3]) : a2[0]);
-                item.put("top_2",  landscape ? a2[0] : a2[1]);
+                item.put("index", itemIdx++);
+                item.put("left", landscape ? (imgH - a1[1] - a1[3]) : a1[0]);
+                item.put("top",  landscape ? a1[0] : a1[1]);
+                if (matchJ >= 0) {
+                    used[matchJ] = true;
+                    int[] a2 = areas.get(matchJ);
+                    item.put("left_2", landscape ? (imgH - a2[1] - a2[3]) : a2[0]);
+                    item.put("top_2",  landscape ? a2[0] : a2[1]);
+                    item.put("repeat", "0");
+                } else {
+                    // 找不到尺寸相近的配对区域，退化为单份
+                    item.put("repeat", "1");
+                }
                 item.put("rotation", landscape ? "90" : "0");
                 item.put("width",  a1[2]);
                 item.put("height", a1[3]);
-                item.put("repeat", "0");
                 items.put(item);
             }
         } else {
-            // 单份：每个透明区域独立处理
             for (int i = 0; i < areas.size(); i++) {
                 int[] a = areas.get(i);
                 JSONObject item = new JSONObject();
@@ -337,6 +351,8 @@ public class PngAnalyzer {
             }
         }
 
+        // photograph 反映实际需要的照片张数，在 items 构建完后赋值
+        data.put("photograph", items.length());
         data.put("items", items);
         return data.toString(2);
     }
@@ -366,6 +382,30 @@ public class PngAnalyzer {
             saved.add(outFile.getAbsolutePath());
         }
         return saved;
+    }
+
+    /** 在预览图上用彩色编号边框标注每个识别出的透明区域，便于调试 */
+    public static Bitmap drawDebugOverlay(Bitmap bitmap, List<int[]> areas) {
+        Bitmap result = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas = new Canvas(result);
+        Paint rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rectPaint.setStyle(Paint.Style.STROKE);
+        rectPaint.setStrokeWidth(5f);
+        Paint bgPaint = new Paint();
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(40f);
+        int[] colors = {0xFFFF3333, 0xFF33CC33, 0xFF3366FF, 0xFFFF9900, 0xFFCC33CC};
+        for (int i = 0; i < areas.size(); i++) {
+            int[] a = areas.get(i);
+            int c = colors[i % colors.length];
+            rectPaint.setColor(c);
+            bgPaint.setColor(c);
+            canvas.drawRect(a[0], a[1], a[0] + a[2], a[1] + a[3], rectPaint);
+            canvas.drawRect(a[0], a[1], a[0] + 64, a[1] + 50, bgPaint);
+            canvas.drawText("#" + i, a[0] + 6, a[1] + 42, textPaint);
+        }
+        return result;
     }
 
     /**
