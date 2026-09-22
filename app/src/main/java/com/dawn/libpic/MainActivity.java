@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageView imageView;
     private TextView jsonTextView;
-    private RadioGroup modeGroup;
     private Button selectButton;
     private Button copyButton;
     private Button saveButton;
@@ -58,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
         imageView    = findViewById(R.id.imageView);
         jsonTextView = findViewById(R.id.jsonTextView);
-        modeGroup    = findViewById(R.id.modeGroup);
         selectButton = findViewById(R.id.selectButton);
         copyButton   = findViewById(R.id.copyButton);
         saveButton   = findViewById(R.id.saveButton);
@@ -136,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
             if (areas.isEmpty()) {
                 display.append("未检测到透明区域，请确认图片包含透明镂空");
             } else {
+                display.append("模式: ").append(isDouble ? "双份" : "单份").append("\n");
                 display.append("检测到 ").append(areas.size()).append(" 个透明区域\n");
                 for (int i = 0; i < areas.size(); i++) {
                     int[] a = areas.get(i);
@@ -206,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                                 "已保存 " + paths.size() + " 张切图\n路径：" + outputDir.getAbsolutePath(),
                                 Toast.LENGTH_LONG).show()
                 );
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() ->
                         Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );

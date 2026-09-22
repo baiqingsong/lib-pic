@@ -388,13 +388,18 @@ public class PngAnalyzer {
     public static Bitmap drawDebugOverlay(Bitmap bitmap, List<int[]> areas) {
         Bitmap result = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(result);
-        Paint rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        // 标注尺寸随图片短边等比缩放，确保在大图和小图上均可读
+        float textSize   = Math.max(28f, Math.min(80f, Math.min(bitmap.getWidth(), bitmap.getHeight()) * 0.12f));
+        float stroke     = Math.max(3f,  textSize * 0.15f);
+        float labelW     = textSize * 1.8f;
+        float labelH     = textSize * 1.25f;
+        Paint rectPaint  = new Paint(Paint.ANTI_ALIAS_FLAG);
         rectPaint.setStyle(Paint.Style.STROKE);
-        rectPaint.setStrokeWidth(5f);
-        Paint bgPaint = new Paint();
-        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rectPaint.setStrokeWidth(stroke);
+        Paint bgPaint    = new Paint();
+        Paint textPaint  = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint.setColor(Color.WHITE);
-        textPaint.setTextSize(40f);
+        textPaint.setTextSize(textSize);
         int[] colors = {0xFFFF3333, 0xFF33CC33, 0xFF3366FF, 0xFFFF9900, 0xFFCC33CC};
         for (int i = 0; i < areas.size(); i++) {
             int[] a = areas.get(i);
@@ -402,8 +407,8 @@ public class PngAnalyzer {
             rectPaint.setColor(c);
             bgPaint.setColor(c);
             canvas.drawRect(a[0], a[1], a[0] + a[2], a[1] + a[3], rectPaint);
-            canvas.drawRect(a[0], a[1], a[0] + 64, a[1] + 50, bgPaint);
-            canvas.drawText("#" + i, a[0] + 6, a[1] + 42, textPaint);
+            canvas.drawRect(a[0], a[1], a[0] + labelW, a[1] + labelH, bgPaint);
+            canvas.drawText("#" + i, a[0] + stroke + 2, a[1] + labelH - stroke, textPaint);
         }
         return result;
     }
