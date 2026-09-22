@@ -1,0 +1,430 @@
+package com.dawn.pic;
+
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+
+/**
+ * 透明区域分析与 JSON 生成工具。
+ * 对应 Python 项目 pngToJson.py 的核心逻辑。
+ *
+ * 输入：含透明镂空的 RGBA PNG 图片
+ * 输出：每个透明区域的坐标/尺寸 JSON，以及可选的切图文件
+ */
+public class PngAnalyzer {
+
+    // alpha 值 <= 此阈值视为透明（处理抗锯齿软边）
+    private static final int TRANSPARENT_ALPHA_THRESHOLD = 25;
+    // 重叠合并：小区域与大区域的重叠面积占小区域的比例超过该值时合并
+    private static final float MERGE_OVERLAP_RATIO = 0.75f;
+    // 相邻合并：小区域面积占大区域的比例低于该值且相邻时并入大区域
+    private static final float SMALL_AREA_RATIO = 0.3f;
+    // 相邻判定：两区域间无透明像素的最大连续列/行数（像素）
+    private static final int ADJACENT_GAP = 30;
+
+    /**
+     * 在位图中找出所有透明区域，返回列表，每项为 int[]{x, y, width, height}。
+     * 流程：生成透明 mask → DFS 找连通区 → 过滤小噪点 → 合并重叠 → 合并相邻小区域 → 排序。
+     */
+    public static List<int[]> findTransparentAreas(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        // 生成透明 mask：true = 透明像素
+        boolean[] mask = new boolean[width * height];
+        for (int i = 0; i < pixels.length; i++) {
+            int alpha = (pixels[i] >> 24) & 0xFF;
+            if (alpha <= TRANSPARENT_ALPHA_THRESHOLD) {
+                mask[i] = true;
+            }
+        }
+
+        // DFS 找连通区域，过滤 100x100 以下的噪点
+        boolean[] visited = new boolean[width * height];
+        List<int[]> areas = new ArrayList<>();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int idx = y * width + x;
+                if (!visited[idx] && mask[idx]) {
+                    int[] bounds = dfs(x, y, mask, visited, width, height);
+                    int w = bounds[2] - bounds[0] + 1;
+                    int h = bounds[3] - bounds[1] + 1;
+                    if (w >= 100 && h >= 100) {
+                        areas.add(new int[]{bounds[0], bounds[1], w, h});
+                    }
+                }
+            }
+        }
+
+        // 合并部分重叠的区域
+        areas = mergeOverlapping(areas);
+
+        // 合并相邻的过小区域
+        areas = mergeAdjacentSmall(areas, mask, width, height);
+
+        // 先按 y 再按 x 排序（从上到下、从左到右）
+        areas.sort((a, b) -> a[1] != b[1] ? a[1] - b[1] : a[0] - b[0]);
+
+        return areas;
+    }
+
+    /**
+     * 非递归 DFS 找连通透明区域，返回包围盒 int[]{minX, minY, maxX, maxY}。
+     */
+    private static int[] dfs(int startX, int startY, boolean[] mask, boolean[] visited, int width, int height) {
+        Deque<Integer> stack = new ArrayDeque<>();
+        stack.push(startY * width + startX);
+
+        int minX = startX, maxX = startX, minY = startY, maxY = startY;
+        int[][] dirs = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+        while (!stack.isEmpty()) {
+            int pos = stack.pop();
+            if (visited[pos]) continue;
+            visited[pos] = true;
+
+            int cx = pos % width;
+            int cy = pos / width;
+            if (cx < minX) minX = cx;
+            if (cx > maxX) maxX = cx;
+            if (cy < minY) minY = cy;
+            if (cy > maxY) maxY = cy;
+
+            for (int[] dir : dirs) {
+                int nx = cx + dir[0];
+                int ny = cy + dir[1];
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    int npos = ny * width + nx;
+                    if (!visited[npos] && mask[npos]) {
+                        stack.push(npos);
+                    }
+                }
+            }
+        }
+
+        return new int[]{minX, minY, maxX, maxY};
+    }
+
+    /**
+     * 合并部分重叠的区域：若小区域大部分（>= MERGE_OVERLAP_RATIO）被大区域覆盖，
+     * 则将两者合并为外接矩形。
+     */
+    private static List<int[]> mergeOverlapping(List<int[]> areas) {
+        // 按面积降序排列，优先处理大区域
+        areas.sort((a, b) -> (b[2] * b[3]) - (a[2] * a[3]));
+        int n = areas.size();
+        boolean[] removed = new boolean[n];
+        List<int[]> result = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            if (removed[i]) continue;
+            int[] cur = areas.get(i).clone();
+            boolean changed = true;
+            while (changed) {
+                changed = false;
+                for (int j = 0; j < n; j++) {
+                    if (j == i || removed[j]) continue;
+                    int[] b = areas.get(j);
+                    int ix0 = Math.max(cur[0], b[0]);
+                    int iy0 = Math.max(cur[1], b[1]);
+                    int ix1 = Math.min(cur[0] + cur[2], b[0] + b[2]);
+                    int iy1 = Math.min(cur[1] + cur[3], b[1] + b[3]);
+                    if (ix0 >= ix1 || iy0 >= iy1) continue;
+                    long inter = (long)(ix1 - ix0) * (iy1 - iy0);
+                    if (inter >= (long)b[2] * b[3] * MERGE_OVERLAP_RATIO) {
+                        int nx0 = Math.min(cur[0], b[0]);
+                        int ny0 = Math.min(cur[1], b[1]);
+                        int nx1 = Math.max(cur[0] + cur[2], b[0] + b[2]);
+                        int ny1 = Math.max(cur[1] + cur[3], b[1] + b[3]);
+                        cur = new int[]{nx0, ny0, nx1 - nx0, ny1 - ny0};
+                        removed[j] = true;
+                        changed = true;
+                    }
+                }
+            }
+            result.add(cur);
+        }
+        return result;
+    }
+
+    /**
+     * 水平方向：统计 x ∈ [x0, x1) 范围内，
+     * 最长的「不含透明像素」的连续列数（即断点宽度）。
+     */
+    private static int maxTransparentBreakH(boolean[] mask, int width, int height,
+                                            int x0, int x1, int y0, int y1) {
+        int run = 0, maxRun = 0;
+        for (int x = x0; x < x1; x++) {
+            boolean hasTrans = false;
+            for (int y = y0; y <= y1; y++) {
+                if (y >= 0 && y < height && x >= 0 && x < width && mask[y * width + x]) {
+                    hasTrans = true;
+                    break;
+                }
+            }
+            if (hasTrans) {
+                run = 0;
+            } else {
+                run++;
+                if (run > maxRun) maxRun = run;
+            }
+        }
+        return maxRun;
+    }
+
+    /**
+     * 垂直方向：统计 y ∈ [y0, y1) 范围内，
+     * 最长的「不含透明像素」的连续行数（即断点高度）。
+     */
+    private static int maxTransparentBreakV(boolean[] mask, int width, int height,
+                                            int y0, int y1, int x0, int x1) {
+        int run = 0, maxRun = 0;
+        for (int y = y0; y < y1; y++) {
+            boolean hasTrans = false;
+            for (int x = x0; x <= x1; x++) {
+                if (x >= 0 && x < width && y >= 0 && y < height && mask[y * width + x]) {
+                    hasTrans = true;
+                    break;
+                }
+            }
+            if (hasTrans) {
+                run = 0;
+            } else {
+                run++;
+                if (run > maxRun) maxRun = run;
+            }
+        }
+        return maxRun;
+    }
+
+    /**
+     * 合并相邻的过小区域：若小区域面积 < 大区域面积 * SMALL_AREA_RATIO
+     * 且两区域之间透明像素断点 <= ADJACENT_GAP，则将小区域并入大区域。
+     */
+    private static List<int[]> mergeAdjacentSmall(List<int[]> areas, boolean[] mask,
+                                                   int width, int height) {
+        areas.sort((a, b) -> (b[2] * b[3]) - (a[2] * a[3]));
+        int n = areas.size();
+        boolean[] removed = new boolean[n];
+        List<int[]> result = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            if (removed[i]) continue;
+            int[] cur = areas.get(i).clone();
+            boolean changed = true;
+            while (changed) {
+                changed = false;
+                for (int j = 0; j < n; j++) {
+                    if (j == i || removed[j]) continue;
+                    int[] b = areas.get(j);
+                    // b 的面积必须远小于 cur
+                    if ((long)b[2] * b[3] >= (long)cur[2] * cur[3] * SMALL_AREA_RATIO) continue;
+
+                    int yOverlap = Math.min(cur[1] + cur[3], b[1] + b[3]) - Math.max(cur[1], b[1]);
+                    int xOverlap = Math.min(cur[0] + cur[2], b[0] + b[2]) - Math.max(cur[0], b[0]);
+                    boolean merged = false;
+
+                    // 水平相邻：b 在 cur 左侧或右侧
+                    if (yOverlap > 0 && yOverlap >= b[3] * 0.5f) {
+                        int gapLo = b[0] < cur[0] ? b[0] + b[2] : cur[0] + cur[2];
+                        int gapHi = b[0] < cur[0] ? cur[0] : b[0];
+                        int y0 = Math.max(cur[1], b[1]);
+                        int y1 = Math.min(cur[1] + cur[3], b[1] + b[3]) - 1;
+                        if (maxTransparentBreakH(mask, width, height, gapLo, gapHi, y0, y1) <= ADJACENT_GAP) {
+                            merged = true;
+                        }
+                    }
+                    // 垂直相邻：b 在 cur 上方或下方
+                    if (!merged && xOverlap > 0 && xOverlap >= b[2] * 0.5f) {
+                        int gapLo = b[1] < cur[1] ? b[1] + b[3] : cur[1] + cur[3];
+                        int gapHi = b[1] < cur[1] ? cur[1] : b[1];
+                        int x0 = Math.max(cur[0], b[0]);
+                        int x1 = Math.min(cur[0] + cur[2], b[0] + b[2]) - 1;
+                        if (maxTransparentBreakV(mask, width, height, gapLo, gapHi, x0, x1) <= ADJACENT_GAP) {
+                            merged = true;
+                        }
+                    }
+
+                    if (merged) {
+                        int nx0 = Math.min(cur[0], b[0]);
+                        int ny0 = Math.min(cur[1], b[1]);
+                        int nx1 = Math.max(cur[0] + cur[2], b[0] + b[2]);
+                        int ny1 = Math.max(cur[1] + cur[3], b[1] + b[3]);
+                        cur = new int[]{nx0, ny0, nx1 - nx0, ny1 - ny0};
+                        removed[j] = true;
+                        changed = true;
+                    }
+                }
+            }
+            result.add(cur);
+        }
+        return result;
+    }
+
+    /**
+     * 根据透明区域生成 JSON 字符串。
+     *
+     * @param bitmap  原始位图
+     * @param areas   透明区域列表（每项 int[]{x, y, width, height}）
+     * @param isDouble true = 双份模式（两两配对），false = 单份模式
+     * @return 格式化 JSON 字符串
+     */
+    public static String generateJson(Bitmap bitmap, List<int[]> areas, boolean isDouble)
+            throws JSONException {
+        int imgW = bitmap.getWidth();
+        int imgH = bitmap.getHeight();
+        boolean landscape = imgW > imgH; // 横图
+
+        JSONObject data = new JSONObject();
+        data.put("bgCover", "0");
+        data.put("isCut", isDouble ? "0" : "1");
+        data.put("rotation", landscape ? "90" : "0");
+        data.put("photograph", areas.size());
+        // 输出时统一以竖向尺寸表示（短边为 width，长边为 height）
+        data.put("width", landscape ? imgH : imgW);
+        data.put("height", landscape ? imgW : imgH);
+
+        JSONArray items = new JSONArray();
+
+        if (isDouble) {
+            // 双份：两两配对，生成带 left_2/top_2 的 item
+            for (int i = 0; i + 1 < areas.size(); i += 2) {
+                int[] a1 = areas.get(i);
+                int[] a2 = areas.get(i + 1);
+                JSONObject item = new JSONObject();
+                item.put("index", i / 2);
+                item.put("left",   landscape ? (imgH - a1[1] - a1[3]) : a1[0]);
+                item.put("top",    landscape ? a1[0] : a1[1]);
+                item.put("left_2", landscape ? (imgH - a2[1] - a2[3]) : a2[0]);
+                item.put("top_2",  landscape ? a2[0] : a2[1]);
+                item.put("rotation", landscape ? "90" : "0");
+                item.put("width",  a1[2]);
+                item.put("height", a1[3]);
+                item.put("repeat", "0");
+                items.put(item);
+            }
+        } else {
+            // 单份：每个透明区域独立处理
+            for (int i = 0; i < areas.size(); i++) {
+                int[] a = areas.get(i);
+                JSONObject item = new JSONObject();
+                item.put("index", i);
+                item.put("left",  landscape ? (imgH - a[1] - a[3]) : a[0]);
+                item.put("top",   landscape ? a[0] : a[1]);
+                item.put("rotation", landscape ? "90" : "0");
+                item.put("width",  a[2]);
+                item.put("height", a[3]);
+                item.put("repeat", "1");
+                items.put(item);
+            }
+        }
+
+        data.put("items", items);
+        return data.toString(2);
+    }
+
+    /**
+     * 将每个透明区域按原图裁剪并保存为 PNG 文件。
+     *
+     * @param bitmap    原始 ARGB 位图
+     * @param areas     透明区域列表
+     * @param outputDir 输出目录
+     * @return 已保存文件的路径列表
+     */
+    public static List<String> saveTransparentMasks(Bitmap bitmap, List<int[]> areas, File outputDir)
+            throws IOException {
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            throw new IOException("无法创建输出目录: " + outputDir.getAbsolutePath());
+        }
+        List<String> saved = new ArrayList<>();
+        for (int i = 0; i < areas.size(); i++) {
+            int[] area = areas.get(i);
+            Bitmap cropped = Bitmap.createBitmap(bitmap, area[0], area[1], area[2], area[3]);
+            File outFile = new File(outputDir, "mask_" + i + ".png");
+            try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                cropped.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            }
+            cropped.recycle();
+            saved.add(outFile.getAbsolutePath());
+        }
+        return saved;
+    }
+
+    /**
+     * 将照片填充到每个透明区域，并在区域左上角标注索引编号，用于预览。
+     *
+     * @param base  原始模板位图（ARGB）
+     * @param photo 要填入的照片位图
+     * @param areas 透明区域列表
+     * @return 合成后的新位图
+     */
+    public static Bitmap pastePhotoToTransparentAreas(Bitmap base, Bitmap photo, List<int[]> areas) {
+        Bitmap result = base.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas = new Canvas(result);
+
+        Paint photoPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint bgPaint = new Paint();
+        bgPaint.setColor(Color.WHITE);
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.BLACK);
+        textPaint.setTextSize(50f);
+
+        int bw = base.getWidth();
+        int bh = base.getHeight();
+        int[] basePixels = new int[bw * bh];
+        base.getPixels(basePixels, 0, bw, 0, 0, bw, bh);
+
+        for (int i = 0; i < areas.size(); i++) {
+            int[] area = areas.get(i);
+            int ax = area[0], ay = area[1], aw = area[2], ah = area[3];
+
+            Bitmap scaled = Bitmap.createScaledBitmap(photo, aw, ah, true);
+            int[] scaledPixels = new int[aw * ah];
+            scaled.getPixels(scaledPixels, 0, aw, 0, 0, aw, ah);
+
+            // 仅将照片贴到透明像素处（保留模板中不透明的素材）
+            int[] masked = new int[aw * ah];
+            for (int py = 0; py < ah; py++) {
+                for (int px = 0; px < aw; px++) {
+                    int baseAlpha = (basePixels[(ay + py) * bw + (ax + px)] >> 24) & 0xFF;
+                    masked[py * aw + px] = baseAlpha <= TRANSPARENT_ALPHA_THRESHOLD
+                            ? scaledPixels[py * aw + px]
+                            : Color.TRANSPARENT;
+                }
+            }
+            Bitmap maskedBmp = Bitmap.createBitmap(masked, aw, ah, Bitmap.Config.ARGB_8888);
+            canvas.drawBitmap(maskedBmp, ax, ay, photoPaint);
+            maskedBmp.recycle();
+            scaled.recycle();
+
+            // 绘制索引编号（白底黑字）
+            String text = String.valueOf(i);
+            Rect textBounds = new Rect();
+            textPaint.getTextBounds(text, 0, text.length(), textBounds);
+            float tx = ax + 10f;
+            float ty = ay + 10f + textBounds.height();
+            canvas.drawRect(tx - 5, ay + 5, tx + textBounds.width() + 5, ty + 5, bgPaint);
+            canvas.drawText(text, tx, ty, textPaint);
+        }
+
+        return result;
+    }
+}
