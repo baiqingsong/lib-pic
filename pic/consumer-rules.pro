@@ -1,0 +1,2 @@
+-keep class com.dawn.serial.** { *; }
+-keep class android_serialport_api.** { *; }

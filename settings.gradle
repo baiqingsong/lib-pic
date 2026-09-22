@@ -1,0 +1,3 @@
+rootProject.name = "lib-pic"
+include ':app'
+include ':pic'
