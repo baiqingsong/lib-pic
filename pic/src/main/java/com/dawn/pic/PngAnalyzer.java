@@ -10,8 +10,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -358,23 +361,26 @@ public class PngAnalyzer {
     }
 
     /**
-     * 将每个透明区域按原图裁剪并保存为 PNG 文件。
+     * 将每个透明区域裁剪为 PNG，保存到 outputDir/child/{imageName}_1.png 等文件。
      *
      * @param bitmap    原始 ARGB 位图
      * @param areas     透明区域列表
-     * @param outputDir 输出目录
+     * @param outputDir 根输出目录
+     * @param imageName 图片名称（不含后缀），用作文件名前缀
      * @return 已保存文件的路径列表
      */
-    public static List<String> saveTransparentMasks(Bitmap bitmap, List<int[]> areas, File outputDir)
+    public static List<String> saveTransparentMasks(Bitmap bitmap, List<int[]> areas,
+                                                     File outputDir, String imageName)
             throws IOException {
-        if (!outputDir.exists() && !outputDir.mkdirs()) {
-            throw new IOException("无法创建输出目录: " + outputDir.getAbsolutePath());
+        File childDir = new File(outputDir, "child");
+        if (!childDir.exists() && !childDir.mkdirs()) {
+            throw new IOException("无法创建 child 目录: " + childDir.getAbsolutePath());
         }
         List<String> saved = new ArrayList<>();
         for (int i = 0; i < areas.size(); i++) {
             int[] area = areas.get(i);
             Bitmap cropped = Bitmap.createBitmap(bitmap, area[0], area[1], area[2], area[3]);
-            File outFile = new File(outputDir, "mask_" + i + ".png");
+            File outFile = new File(childDir, imageName + "_" + (i + 1) + ".png");
             try (FileOutputStream fos = new FileOutputStream(outFile)) {
                 cropped.compress(Bitmap.CompressFormat.PNG, 100, fos);
             }
@@ -382,6 +388,31 @@ public class PngAnalyzer {
             saved.add(outFile.getAbsolutePath());
         }
         return saved;
+    }
+
+    /**
+     * 追加/更新 outputDir/pic.json 中的一条记录。
+     * key 为图片名（不含后缀），value 为解析后的 JSON 对象。
+     */
+    public static void savePicJson(File outputDir, String imageName, String jsonString)
+            throws IOException, JSONException {
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            throw new IOException("无法创建输出目录: " + outputDir.getAbsolutePath());
+        }
+        File picJsonFile = new File(outputDir, "pic.json");
+        JSONObject root = new JSONObject();
+        if (picJsonFile.exists()) {
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new FileReader(picJsonFile))) {
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+            }
+            try { root = new JSONObject(sb.toString()); } catch (JSONException ignored) {}
+        }
+        root.put(imageName, new JSONObject(jsonString));
+        try (FileWriter writer = new FileWriter(picJsonFile)) {
+            writer.write(root.toString(2));
+        }
     }
 
     /** 在预览图上用彩色编号边框标注每个识别出的透明区域，便于调试 */
