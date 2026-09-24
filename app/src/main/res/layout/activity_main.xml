@@ -39,6 +39,13 @@
         android:layout_height="wrap_content"
         android:text="加载内置测试图片 (cs.png)" />
 
+    <Button
+        android:id="@+id/composeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:text="选人像并合成预览" />
+
     <!-- 进度条（处理时显示） -->
     <ProgressBar
         android:id="@+id/progressBar"

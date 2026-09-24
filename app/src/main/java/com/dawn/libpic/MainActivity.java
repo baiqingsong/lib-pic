@@ -35,8 +35,11 @@ import androidx.core.content.ContextCompat;
 
 import com.dawn.pic.PngAnalyzer;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private Button copyButton;
     private Button saveButton;
     private Button testButton;
+    private Button composeButton;
     private ProgressBar progressBar;
 
     private static final int REQ_WRITE_PERMISSION = 101;
@@ -69,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String[]> imagePickerLauncher =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onImageSelected);
 
+    // 选人像用于合成预览
+    private final ActivityResultLauncher<String[]> personPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onPersonSelected);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,12 +88,14 @@ public class MainActivity extends AppCompatActivity {
         copyButton   = findViewById(R.id.copyButton);
         saveButton   = findViewById(R.id.saveButton);
         testButton   = findViewById(R.id.testButton);
+        composeButton = findViewById(R.id.composeButton);
         progressBar  = findViewById(R.id.progressBar);
 
         selectButton.setOnClickListener(v -> imagePickerLauncher.launch(new String[]{"image/*"}));
         testButton.setOnClickListener(v -> loadTestImage());
         copyButton.setOnClickListener(v -> copyJson());
         saveButton.setOnClickListener(v -> saveMasks());
+        composeButton.setOnClickListener(v -> personPickerLauncher.launch(new String[]{"image/*"}));
     }
 
     private void onImageSelected(Uri uri) {
@@ -143,6 +153,23 @@ public class MainActivity extends AppCompatActivity {
             }
             List<int[]> areas = PngAnalyzer.findTransparentAreas(bitmap);
 
+            // 诊断：采样中心点和四角的 alpha 值，帮助判断图片是否有透明通道
+            int[] diagPixels = new int[5];
+            int bw = bitmap.getWidth(), bh = bitmap.getHeight();
+            bitmap.getPixels(diagPixels, 0, 1, bw / 2,       bh / 2,       1, 1);
+            bitmap.getPixels(diagPixels, 1, 1, bw / 4,       bh / 4,       1, 1);
+            bitmap.getPixels(diagPixels, 2, 1, bw * 3 / 4,   bh / 4,       1, 1);
+            bitmap.getPixels(diagPixels, 3, 1, bw / 4,       bh * 3 / 4,   1, 1);
+            bitmap.getPixels(diagPixels, 4, 1, bw * 3 / 4,   bh * 3 / 4,   1, 1);
+            Log.d("PicApp", String.format("诊断 %dx%d config=%s areas=%d alpha=[%d,%d,%d,%d,%d]",
+                    bw, bh, bitmap.getConfig(),
+                    areas.size(),
+                    (diagPixels[0] >> 24) & 0xFF,
+                    (diagPixels[1] >> 24) & 0xFF,
+                    (diagPixels[2] >> 24) & 0xFF,
+                    (diagPixels[3] >> 24) & 0xFF,
+                    (diagPixels[4] >> 24) & 0xFF));
+
             // 输出每个区域坐标便于调试
             for (int i = 0; i < areas.size(); i++) {
                 int[] a = areas.get(i);
@@ -195,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
         testButton.setEnabled(false);
         copyButton.setEnabled(false);
         saveButton.setEnabled(false);
+        composeButton.setEnabled(false);
     }
 
     private void setUiIdle(boolean hasResult) {
@@ -203,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
         testButton.setEnabled(true);
         copyButton.setEnabled(hasResult);
         saveButton.setEnabled(hasResult);
+        composeButton.setEnabled(hasResult);
     }
 
     private void showError(Throwable e) {
@@ -341,6 +370,40 @@ public class MainActivity extends AppCompatActivity {
         return name != null ? name : "image";
     }
 
+    /** 用户选定人像后，按当前 JSON 合成预览并显示 */
+    private void onPersonSelected(Uri uri) {
+        if (uri == null || currentBitmap == null || currentJson == null) return;
+        setUiBusy();
+        executor.execute(() -> {
+            try {
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap person;
+                try (InputStream is = getContentResolver().openInputStream(uri)) {
+                    person = BitmapFactory.decodeStream(is, null, opts);
+                }
+                if (person == null) throw new IllegalArgumentException("人像解码失败");
+
+                List<Bitmap> photos = new ArrayList<>();
+                // 当前演示用同一张人像填满所有槽位
+                int photograph = new JSONObject(currentJson).optInt("photograph", 1);
+                for (int i = 0; i < Math.max(photograph, 1); i++) photos.add(person);
+
+                Bitmap composed = PngAnalyzer.compositePhotos(currentBitmap, currentJson, photos);
+                person.recycle();
+
+                runOnUiThread(() -> {
+                    imageView.setImageBitmap(composed);
+                    setUiIdle(true);
+                    Toast.makeText(this, "合成预览完成", Toast.LENGTH_SHORT).show();
+                });
+            } catch (Throwable e) {
+                Log.e("PicApp", "合成预览失败", e);
+                runOnUiThread(() -> { showError(e); setUiIdle(currentJson != null); });
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -349,3 +412,4 @@ public class MainActivity extends AppCompatActivity {
         if (currentPreview != null) { currentPreview.recycle(); currentPreview = null; }
     }
 }
+

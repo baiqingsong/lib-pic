@@ -3,6 +3,7 @@ package com.dawn.pic;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
@@ -415,8 +416,7 @@ public class PngAnalyzer {
         }
     }
 
-    /** 在预览图上用彩色编号边框标注每个识别出的透明区域，便于调试 */
-    public static Bitmap drawDebugOverlay(Bitmap bitmap, List<int[]> areas) {
+    /** 在预览图上用彩色编号边框标注每个识别出的透明区域，便于调试 */    public static Bitmap drawDebugOverlay(Bitmap bitmap, List<int[]> areas) {
         Bitmap result = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(result);
         // 标注尺寸随图片短边等比缩放，确保在大图和小图上均可读
@@ -503,4 +503,114 @@ public class PngAnalyzer {
 
         return result;
     }
+
+    /**
+     * 根据 generateJson() 输出的 JSON 配置，将照片列表合成到模板中。
+     * 遵循 bgCover / rotation / repeat / left_2 / top_2 等所有字段。
+     *
+     * @param template   含透明镂空的模板位图（ARGB_8888）
+     * @param jsonString generateJson() 返回的 JSON 字符串
+     * @param photos     按 index 顺序排列的人像列表，不足时循环使用最后一张
+     * @return           合成后的位图
+     */
+    public static Bitmap compositePhotos(Bitmap template, String jsonString, List<Bitmap> photos)
+            throws JSONException {
+        if (template == null || photos == null || photos.isEmpty()) return null;
+
+        JSONObject cfg   = new JSONObject(jsonString);
+        int bgCover      = jsonOptInt(cfg, "bgCover", 0);
+        int rotation     = jsonOptInt(cfg, "rotation", 0);
+        int canvasW      = jsonOptInt(cfg, "width",  template.getWidth());
+        int canvasH      = jsonOptInt(cfg, "height", template.getHeight());
+        JSONArray items  = cfg.optJSONArray("items");
+
+        // 横图时 JSON 记录的是竖向尺寸，需要交换回来作为实际画布尺寸
+        if (rotation == 90) { int t = canvasW; canvasW = canvasH; canvasH = t; }
+
+        Bitmap result = Bitmap.createBitmap(canvasW, canvasH, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(result);
+
+        Bitmap frame = rotation == 90 ? rotateBitmap(template, 90) : template;
+
+        // bgCover=1: 相框在照片下面；bgCover=0: 相框压在照片上面
+        if (bgCover == 1) canvas.drawBitmap(frame, 0, 0, null);
+
+        if (items != null) {
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject item  = items.getJSONObject(i);
+                int itemW        = jsonOptInt(item, "width",  0);
+                int itemH        = jsonOptInt(item, "height", 0);
+                int left         = jsonOptInt(item, "left",   0);
+                int top          = jsonOptInt(item, "top",    0);
+                int left2        = jsonOptInt(item, "left_2", -1);
+                int top2         = jsonOptInt(item, "top_2",  -1);
+                int repeat       = jsonOptInt(item, "repeat", 1);
+                int itemRotation = jsonOptInt(item, "rotation", 0);
+                int photoIdx     = Math.min(jsonOptInt(item, "index", i), photos.size() - 1);
+
+                if (itemW <= 0 || itemH <= 0) continue;
+                Bitmap photo = photos.get(photoIdx);
+                if (photo == null) continue;
+
+                Bitmap cropped = cropToFit(photo, itemW, itemH);
+                if (itemRotation == 90) {
+                    Bitmap rotated = rotateBitmap(cropped, 90);
+                    cropped.recycle();
+                    cropped = rotated;
+                }
+
+                canvas.drawBitmap(cropped, left, top, null);
+                // repeat="0" 表示双份，需要在第二个位置再绘制一次
+                if (repeat == 0 && left2 >= 0 && top2 >= 0) {
+                    canvas.drawBitmap(cropped, left2, top2, null);
+                }
+                cropped.recycle();
+            }
+        }
+
+        if (bgCover == 0) canvas.drawBitmap(frame, 0, 0, null);
+
+        if (frame != template && !frame.isRecycled()) frame.recycle();
+        return result;
+    }
+
+    /** 居中裁剪并缩放 source，使结果恰好为 targetW × targetH */
+    private static Bitmap cropToFit(Bitmap source, int targetW, int targetH) {
+        int srcW = source.getWidth(), srcH = source.getHeight();
+        float scale = Math.max((float) targetW / srcW, (float) targetH / srcH);
+        int scaledW = Math.round(srcW * scale);
+        int scaledH = Math.round(srcH * scale);
+        Bitmap scaled = Bitmap.createScaledBitmap(source, scaledW, scaledH, true);
+        int x = (scaledW - targetW) / 2;
+        int y = (scaledH - targetH) / 2;
+        Bitmap cropped = Bitmap.createBitmap(scaled, x, y, targetW, targetH);
+        if (scaled != source && scaled != cropped) scaled.recycle();
+        return cropped;
+    }
+
+    /** 顺时针旋转 Bitmap degrees 度，返回新 Bitmap */
+    private static Bitmap rotateBitmap(Bitmap src, int degrees) {
+        Matrix m = new Matrix();
+        m.setRotate(degrees, src.getWidth() / 2f, src.getHeight() / 2f);
+        // 旋转后平移到第一象限
+        float[] v = new float[9];
+        m.getValues(v);
+        m.postTranslate(-v[Matrix.MTRANS_X], -v[Matrix.MTRANS_Y]);
+        int dstW = (degrees % 180 == 90) ? src.getHeight() : src.getWidth();
+        int dstH = (degrees % 180 == 90) ? src.getWidth()  : src.getHeight();
+        Bitmap dst = Bitmap.createBitmap(dstW, dstH, Bitmap.Config.ARGB_8888);
+        new Canvas(dst).drawBitmap(src, m, new Paint(Paint.ANTI_ALIAS_FLAG));
+        return dst;
+    }
+
+    /** 兼容 JSON 中值为字符串或整数两种情况 */
+    private static int jsonOptInt(JSONObject obj, String key, int def) {
+        Object v = obj.opt(key);
+        if (v instanceof Number) return ((Number) v).intValue();
+        if (v instanceof String) {
+            try { return Integer.parseInt((String) v); } catch (NumberFormatException ignored) {}
+        }
+        return def;
+    }
 }
+

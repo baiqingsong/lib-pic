@@ -1,263 +1,85 @@
---------- beginning of kernel
---------- beginning of system
---------- beginning of main
-2026-09-23 14:43:33.781  5626-5626  Zygote                  com.dawn.libpic                      I  seccomp disabled by setenforce 0
-2026-09-23 14:43:33.786  5626-5626  chatty                  com.dawn.libpic                      I  uid=10117(com.dawn.libpic) identical 8 lines
-2026-09-23 14:43:35.187  5626-5650  chatty                  com.dawn.libpic                      I  uid=10117(com.dawn.libpic) expire 3 lines
-2026-09-23 14:43:39.828   184-522   BufferQueueProducer     surfaceflinger                       E  [com.dawn.libpic/com.dawn.libpic.MainActivity#0](id:b80000000b,api:0,p:-1,c:184) disconnect: not connected (req=1)
-2026-09-23 14:44:16.095  5626-5821  chatty                  com.dawn.libpic                      I  uid=10117(com.dawn.libpic) expire 1 line
-2026-09-23 14:56:22.328  6974-6974  Zygote                  com.dawn.libpic                      I  seccomp disabled by setenforce 0
-2026-09-23 14:56:22.334  6974-6974  chatty                  com.dawn.libpic                      I  uid=10117(com.dawn.libpic) expire 209 lines
-2026-09-23 14:56:23.400  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->splitDexPath(Ljava/lang/String;)Ljava/util/List; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Llibcore/io/Libcore;->os:Llibcore/io/Os; (greylist, linking, allowed)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Llibcore/io/Os;->stat(Ljava/lang/String;)Landroid/system/StructStat; (greylist, linking, allowed)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->addDexPath(Ljava/lang/String;Ljava/io/File;)V (greylist, linking, allowed)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->addDexPath(Ljava/lang/String;Ljava/io/File;Z)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->addDexPath(Ljava/lang/String;Ljava/io/File;Z)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->splitDexPath(Ljava/lang/String;)Ljava/util/List; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->addNativePath(Ljava/util/Collection;)V (greylist, linking, allowed)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Ldalvik/system/DexPathList;->nativeLibraryPathElements:[Ldalvik/system/DexPathList$NativeLibraryElement; (greylist, linking, allowed)
-2026-09-23 14:56:23.401  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->findClass(Ljava/lang/String;Ljava/util/List;)Ljava/lang/Class; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Ldalvik/system/DexPathList;->dexElements:[Ldalvik/system/DexPathList$Element; (greylist, linking, allowed)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList$Element;->findClass(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/util/List;)Ljava/lang/Class; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Ldalvik/system/DexPathList;->dexElementsSuppressedExceptions:[Ljava/io/IOException; (greylist, linking, allowed)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->findLibrary(Ljava/lang/String;)Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList$NativeLibraryElement;->findNativeLibrary(Ljava/lang/String;)Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->findResource(Ljava/lang/String;)Ljava/net/URL; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList$Element;->findResource(Ljava/lang/String;)Ljava/net/URL; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->findResources(Ljava/lang/String;)Ljava/util/Enumeration; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.402  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList$Element;->findResource(Ljava/lang/String;)Ljava/net/URL; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.403  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->getDexPaths()Ljava/util/List; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.403  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList$Element;->access$000(Ldalvik/system/DexPathList$Element;)Ljava/lang/String; (blacklist, linking, denied)
-2026-09-23 14:56:23.403  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->getNativeLibraryDirectories()Ljava/util/List; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.403  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->initByteBufferDexPath([Ljava/nio/ByteBuffer;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.403  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Ldalvik/system/-$$Lambda$DexPathList$_CyMypnZmV6ArWiPOPB4EkAIeUc;->INSTANCE:Ldalvik/system/-$$Lambda$DexPathList$_CyMypnZmV6ArWiPOPB4EkAIeUc; (blacklist, linking, denied)
-2026-09-23 14:56:23.403  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexFile;-><init>([Ljava/nio/ByteBuffer;Ljava/lang/ClassLoader;[Ldalvik/system/DexPathList$Element;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.404  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/DexPathList;->getAllNativeLibraryDirectories()Ljava/util/List; (blacklist, linking, denied)
-2026-09-23 14:56:23.844  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Current dex file has more than one class in it. Calling RetransformClasses on this class might fail if no transformations are applied to it!
-2026-09-23 14:56:23.844  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;-><clinit>()V (blacklist, linking, denied)
-2026-09-23 14:56:23.844  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;-><init>(Landroid/app/ActivityThread;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.845  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/view/DisplayAdjustments;-><init>()V (greylist, linking, allowed)
-2026-09-23 14:56:23.845  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDisplayAdjustments:Landroid/view/DisplayAdjustments; (greylist, linking, allowed)
-2026-09-23 14:56:23.845  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mReceivers:Landroid/util/ArrayMap; (greylist, linking, allowed)
-2026-09-23 14:56:23.845  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnregisteredReceivers:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.845  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.845  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnboundServices:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mActivityThread:Landroid/app/ActivityThread; (greylist, linking, allowed)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mApplicationInfo:Landroid/content/pm/ApplicationInfo; (greylist, linking, allowed)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mPackageName:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mAppDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mResDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitAppDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitResDirs:[Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitClassLoaderNames:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.846  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mOverlayDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDataDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDataDirFile:Ljava/io/File; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDeviceProtectedDataDirFile:Ljava/io/File; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mCredentialProtectedDataDirFile:Ljava/io/File; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mLibDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mBaseClassLoader:Ljava/lang/ClassLoader; (greylist, linking, allowed)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSecurityViolation:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.847  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mIncludeCode:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.848  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mRegisterPackage:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.848  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mResources:Landroid/content/res/Resources; (greylist, linking, allowed)
-2026-09-23 14:56:23.848  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDefaultClassLoader:Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.848  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createAppFactory(Landroid/content/pm/ApplicationInfo;Ljava/lang/ClassLoader;)Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.848  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;-><init>(Landroid/app/ActivityThread;Landroid/content/pm/ApplicationInfo;Landroid/content/res/CompatibilityInfo;Ljava/lang/ClassLoader;ZZZ)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.848  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnregisteredReceivers:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.849  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.849  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnboundServices:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.849  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->setApplicationInfo(Landroid/content/pm/ApplicationInfo;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.849  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->access$000(Landroid/app/LoadedApk;)[Ljava/lang/String; (blacklist, linking, denied)
-2026-09-23 14:56:23.849  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitNames:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.850  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->access$100(Landroid/app/LoadedApk;Ljava/util/List;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.850  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createOrUpdateClassLoaderLocked(Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.850  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->access$200(Landroid/app/LoadedApk;)Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.850  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mClassLoader:Ljava/lang/ClassLoader; (greylist, linking, allowed)
-2026-09-23 14:56:23.850  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->access$300(Landroid/app/LoadedApk;)[Ljava/lang/String; (blacklist, linking, denied)
-2026-09-23 14:56:23.851  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->access$400(Landroid/app/LoadedApk;)[Ljava/lang/String; (blacklist, linking, denied)
-2026-09-23 14:56:23.851  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitAppDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.851  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->access$500(Landroid/app/LoadedApk;)[Ljava/lang/String; (blacklist, linking, denied)
-2026-09-23 14:56:23.851  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitClassLoaderNames:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.851  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->adjustNativeLibraryPaths(Landroid/content/pm/ApplicationInfo;)Landroid/content/pm/ApplicationInfo; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/content/pm/ApplicationInfo;->primaryCpuAbi:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/content/pm/ApplicationInfo;->secondaryCpuAbi:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/VMRuntime;->getRuntime()Ldalvik/system/VMRuntime; (greylist,core-platform-api, linking, allowed)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/VMRuntime;->vmInstructionSet()Ljava/lang/String; (greylist,core-platform-api, linking, allowed)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/VMRuntime;->getInstructionSet(Ljava/lang/String;)Ljava/lang/String; (greylist,core-platform-api, linking, allowed)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/content/pm/ApplicationInfo;->secondaryNativeLibraryDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->allowThreadDiskReads()Landroid/os/StrictMode$ThreadPolicy; (blacklist, linking, denied)
-2026-09-23 14:56:23.852  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->appendApkLibPathIfNeeded(Ljava/lang/String;Landroid/content/pm/ApplicationInfo;Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.853  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->appendSharedLibrariesLibPathsIfNeeded(Ljava/util/List;Landroid/content/pm/ApplicationInfo;Ljava/util/Set;Ljava/util/List;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.853  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/SharedLibraryInfo;->getAllCodePaths()Ljava/util/List; (blacklist, linking, denied)
-2026-09-23 14:56:23.853  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->canAccessDataDir()Z (blacklist, linking, denied)
-2026-09-23 14:56:23.854  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/ActivityThread;->currentPackageName()Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.854  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->allowThreadDiskReads()Landroid/os/StrictMode$ThreadPolicy; (blacklist, linking, denied)
-2026-09-23 14:56:23.854  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createAppFactory(Landroid/content/pm/ApplicationInfo;Ljava/lang/ClassLoader;)Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.854  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mIncludeCode:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.854  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/util/Slog;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I (greylist, linking, allowed)
-2026-09-23 14:56:23.855  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/AppComponentFactory;->DEFAULT:Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.855  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createOrUpdateClassLoaderLocked(Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.855  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDefaultClassLoader:Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.855  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDefaultClassLoader:Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.855  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createAppFactory(Landroid/content/pm/ApplicationInfo;Ljava/lang/ClassLoader;)Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.856  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mIncludeCode:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.856  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/ActivityThread;->getPackageManager()Landroid/content/pm/IPackageManager; (greylist, linking, allowed)
-2026-09-23 14:56:23.856  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/IPackageManager;->notifyPackageUse(Ljava/lang/String;I)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.856  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mRegisterPackage:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.857  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/ActivityManager;->getService()Landroid/app/IActivityManager; (greylist, linking, allowed)
-2026-09-23 14:56:23.857  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/IActivityManager;->addPackageDependency(Ljava/lang/String;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.857  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/ApplicationInfo;->isSystemApp()Z (blacklist,test-api, linking, denied)
-2026-09-23 14:56:23.857  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDefaultClassLoader:Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.857  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createSharedLibrariesLoaders(Ljava/util/List;ZLjava/lang/String;Ljava/lang/String;)Ljava/util/List; (blacklist, linking, denied)
-2026-09-23 14:56:23.857  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createSharedLibraryLoader(Landroid/content/pm/SharedLibraryInfo;ZLjava/lang/String;Ljava/lang/String;)Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.858  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getLibrariesFor(Ljava/lang/String;)[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.858  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/IPackageManager;->getApplicationInfo(Ljava/lang/String;II)Landroid/content/pm/ApplicationInfo; (greylist, linking, allowed)
-2026-09-23 14:56:23.858  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getServiceDispatcherCommon(Landroid/content/ServiceConnection;Landroid/content/Context;Landroid/os/Handler;Ljava/util/concurrent/Executor;I)Landroid/app/IServiceConnection; (blacklist, linking, denied)
-2026-09-23 14:56:23.858  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.859  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.859  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ServiceDispatcher;-><init>(Landroid/content/ServiceConnection;Landroid/content/Context;Ljava/util/concurrent/Executor;I)V (blacklist, linking, denied)
-2026-09-23 14:56:23.859  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ServiceDispatcher;-><init>(Landroid/content/ServiceConnection;Landroid/content/Context;Landroid/os/Handler;I)V (greylist, linking, allowed)
-2026-09-23 14:56:23.859  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.859  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ServiceDispatcher;->getIServiceConnection()Landroid/app/IServiceConnection; (greylist, linking, allowed)
-2026-09-23 14:56:23.859  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ServiceDispatcher;->validate(Landroid/content/Context;Landroid/os/Handler;Ljava/util/concurrent/Executor;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.860  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->initializeJavaContextClassLoader()V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.860  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/PackageManager;->getPackageInfoAsUserCached(Ljava/lang/String;II)Landroid/content/pm/PackageInfo; (blacklist, linking, denied)
-2026-09-23 14:56:23.860  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->makePaths(Landroid/app/ActivityThread;Landroid/content/pm/ApplicationInfo;Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.860  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->makePaths(Landroid/app/ActivityThread;ZLandroid/content/pm/ApplicationInfo;Ljava/util/List;Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.860  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->makePaths(Landroid/app/ActivityThread;ZLandroid/content/pm/ApplicationInfo;Ljava/util/List;Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.860  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/ApplicationInfo;->requestsIsolatedSplitLoading()Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentationPackageName:Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentationAppDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentationSplitAppDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentationLibDir:Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentedAppDir:Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentedSplitAppDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentedLibDir:Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/ApplicationInfo;->requestsIsolatedSplitLoading()Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.861  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Ldalvik/system/VMRuntime;->is64BitAbi(Ljava/lang/String;)Z (greylist,core-platform-api, linking, allowed)
-2026-09-23 14:56:23.862  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/content/pm/ApplicationInfo;->sharedLibraryInfos:Ljava/util/List; (blacklist, linking, denied)
-2026-09-23 14:56:23.862  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->appendSharedLibrariesLibPathsIfNeeded(Ljava/util/List;Landroid/content/pm/ApplicationInfo;Ljava/util/Set;Ljava/util/List;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.862  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->rewriteRValues(Ljava/lang/ClassLoader;Ljava/lang/String;I)V (greylist, linking, allowed)
-2026-09-23 14:56:23.862  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->setApplicationInfo(Landroid/content/pm/ApplicationInfo;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.862  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->adjustNativeLibraryPaths(Landroid/content/pm/ApplicationInfo;)Landroid/content/pm/ApplicationInfo; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.862  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->setThreadPolicy(Landroid/os/StrictMode$ThreadPolicy;)V (blacklist, linking, denied)
-2026-09-23 14:56:23.863  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->setupJitProfileSupport()V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.863  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/DexLoadReporter;->getInstance()Landroid/app/DexLoadReporter; (blacklist, linking, denied)
-2026-09-23 14:56:23.863  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createSharedLibraryLoader(Landroid/content/pm/SharedLibraryInfo;ZLjava/lang/String;Ljava/lang/String;)Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.863  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/pm/SharedLibraryInfo;->getAllCodePaths()Ljava/util/List; (blacklist, linking, denied)
-2026-09-23 14:56:23.863  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->forgetReceiverDispatcher(Landroid/content/Context;Landroid/content/BroadcastReceiver;)Landroid/content/IIntentReceiver; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.863  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnregisteredReceivers:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnregisteredReceivers:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ReceiverDispatcher;->setUnregisterLocation(Ljava/lang/RuntimeException;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk$ReceiverDispatcher;->mForgotten:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnregisteredReceivers:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ReceiverDispatcher;->getUnregisterLocation()Ljava/lang/RuntimeException; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->forgetServiceDispatcher(Landroid/content/Context;Landroid/content/ServiceConnection;)Landroid/app/IServiceConnection; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.864  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.865  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.865  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ServiceDispatcher;->doForget()V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.865  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mUnboundServices:Landroid/util/ArrayMap; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.865  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ServiceDispatcher;->getUnbindLocation()Ljava/lang/RuntimeException; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.865  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getAppDir()Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.865  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getAppFactory()Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.866  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mAppComponentFactory:Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.866  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getApplication()Landroid/app/Application; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.866  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mApplication:Landroid/app/Application; (greylist, linking, allowed)
-2026-09-23 14:56:23.866  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getApplicationInfo()Landroid/content/pm/ApplicationInfo; (greylist, linking, allowed)
-2026-09-23 14:56:23.866  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getAssets()Landroid/content/res/AssetManager; (greylist, linking, allowed)
-2026-09-23 14:56:23.866  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getResources()Landroid/content/res/Resources; (greylist, linking, allowed)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getClassLoader()Ljava/lang/ClassLoader; (greylist, linking, allowed)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createOrUpdateClassLoaderLocked(Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getCompatibilityInfo()Landroid/content/res/CompatibilityInfo; (greylist, linking, allowed)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/view/DisplayAdjustments;->getCompatibilityInfo()Landroid/content/res/CompatibilityInfo; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getCredentialProtectedDataDirFile()Ljava/io/File; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mCredentialProtectedDataDirFile:Ljava/io/File; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.867  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getDataDir()Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getDataDirFile()Ljava/io/File; (greylist, linking, allowed)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDataDirFile:Ljava/io/File; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getDeviceProtectedDataDirFile()Ljava/io/File; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDeviceProtectedDataDirFile:Ljava/io/File; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getLibDir()Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getOverlayDirs()[Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.868  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mOverlayDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.869  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getPackageName()Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.869  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getReceiverDispatcher(Landroid/content/BroadcastReceiver;Landroid/content/Context;Landroid/os/Handler;Landroid/app/Instrumentation;Z)Landroid/content/IIntentReceiver; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.869  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ReceiverDispatcher;-><init>(Landroid/content/BroadcastReceiver;Landroid/content/Context;Landroid/os/Handler;Landroid/app/Instrumentation;Z)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.869  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$ReceiverDispatcher;->validate(Landroid/content/Context;Landroid/os/Handler;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.869  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getResDir()Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.869  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getSplitPaths(Ljava/lang/String;)[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.870  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getServiceDispatcher(Landroid/content/ServiceConnection;Landroid/content/Context;Landroid/os/Handler;I)Landroid/app/IServiceConnection; (greylist, linking, allowed)
-2026-09-23 14:56:23.870  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getServiceDispatcherCommon(Landroid/content/ServiceConnection;Landroid/content/Context;Landroid/os/Handler;Ljava/util/concurrent/Executor;I)Landroid/app/IServiceConnection; (blacklist, linking, denied)
-2026-09-23 14:56:23.870  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getServiceDispatcher(Landroid/content/ServiceConnection;Landroid/content/Context;Ljava/util/concurrent/Executor;I)Landroid/app/IServiceConnection; (blacklist, linking, denied)
-2026-09-23 14:56:23.870  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getServiceDispatcherCommon(Landroid/content/ServiceConnection;Landroid/content/Context;Landroid/os/Handler;Ljava/util/concurrent/Executor;I)Landroid/app/IServiceConnection; (blacklist, linking, denied)
-2026-09-23 14:56:23.870  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getSplitAppDirs()[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.870  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitAppDirs:[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.871  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getSplitClassLoader(Ljava/lang/String;)Ljava/lang/ClassLoader; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.871  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitLoader:Landroid/app/LoadedApk$SplitDependencyLoaderImpl; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.871  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$SplitDependencyLoaderImpl;->getClassLoaderForSplit(Ljava/lang/String;)Ljava/lang/ClassLoader; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.871  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getSplitPaths(Ljava/lang/String;)[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.871  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSplitLoader:Landroid/app/LoadedApk$SplitDependencyLoaderImpl; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.872  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk$SplitDependencyLoaderImpl;->getSplitPathsForSplit(Ljava/lang/String;)[Ljava/lang/String; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.872  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getSplitResDirs()[Ljava/lang/String; (greylist, linking, allowed)
-2026-09-23 14:56:23.872  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->getTargetSdkVersion()I (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.872  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->installSystemApplicationInfo(Landroid/content/pm/ApplicationInfo;Ljava/lang/ClassLoader;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.872  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mDefaultClassLoader:Ljava/lang/ClassLoader; (blacklist, linking, denied)
-2026-09-23 14:56:23.873  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->createAppFactory(Landroid/content/pm/ApplicationInfo;Ljava/lang/ClassLoader;)Landroid/app/AppComponentFactory; (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.873  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->isSecurityViolation()Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.873  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mSecurityViolation:Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.873  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->lookupServiceDispatcher(Landroid/content/ServiceConnection;Landroid/content/Context;)Landroid/app/IServiceConnection; (greylist, linking, allowed)
-2026-09-23 14:56:23.873  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/LoadedApk;->mServices:Landroid/util/ArrayMap; (greylist-max-p, linking, denied)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->makeApplication(ZLandroid/app/Instrumentation;)Landroid/app/Application; (greylist, linking, allowed)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->initializeJavaContextClassLoader()V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/content/res/AssetManager;->getAssignedPackageIdentifiers(ZZ)Landroid/util/SparseArray; (blacklist, linking, denied)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mInstrumentation:Landroid/app/Instrumentation; (greylist, linking, allowed)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden field Landroid/app/ActivityThread;->mAllApplications:Ljava/util/ArrayList; (greylist, linking, allowed)
-2026-09-23 14:56:23.874  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/os/Trace;->traceEnd(J)V (greylist, linking, allowed)
-2026-09-23 14:56:23.875  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->removeContextRegistrations(Landroid/content/Context;Ljava/lang/String;Ljava/lang/String;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.875  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/os/StrictMode;->vmRegistrationLeaksEnabled()Z (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.875  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->setCompatibilityInfo(Landroid/content/res/CompatibilityInfo;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.875  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/view/DisplayAdjustments;->setCompatibilityInfo(Landroid/content/res/CompatibilityInfo;)V (greylist, linking, allowed)
-2026-09-23 14:56:23.876  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->updateApplicationInfo(Landroid/content/pm/ApplicationInfo;Ljava/util/List;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:23.876  6974-6974  com.dawn.libpi          com.dawn.libpic                      W  Accessing hidden method Landroid/app/LoadedApk;->setApplicationInfo(Landroid/content/pm/ApplicationInfo;)V (greylist-max-o, linking, denied)
-2026-09-23 14:56:24.301  6974-6974  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
-2026-09-23 14:56:24.302  6974-6974  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
-2026-09-23 14:56:24.399  6974-6992  System                  com.dawn.libpic                      W  A resource failed to call close. 
-2026-09-23 14:56:24.497  6974-6974  AppCompatDelegate       com.dawn.libpic                      D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
-2026-09-23 14:56:25.159  6974-7008  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1311; [Func] : base_context_deal_with_version_affairs_rk_ext;
-                                                                                                    arm_release_ver of this mali_so is 'g2p0-01eac0', rk_so_ver is '8@0 '.
-2026-09-23 14:56:25.159  6974-7008  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1327; [Func] : base_context_deal_with_version_affairs_rk_ext;
-                                                                                                    arm_release_vers are match. to set the full mali_ver 'g2p0-01eac0-x-8@0' as value of 'sys.gmali.version'.
-2026-09-23 14:56:25.156  6974-6974  RenderThread            com.dawn.libpic                      I  type=1400 audit(0.0:9578): avc: denied { write } for name="property_service" dev="tmpfs" ino=18402 scontext=u:r:untrusted_app:s0:c117,c256,c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=1 app=com.dawn.libpic
-2026-09-23 14:56:25.159  6974-6974  RenderThread            com.dawn.libpic                      I  type=1400 audit(0.0:9579): avc: denied { connectto } for path="/dev/socket/property_service" scontext=u:r:untrusted_app:s0:c117,c256,c512,c768 tcontext=u:r:init:s0 tclass=unix_stream_socket permissive=1 app=com.dawn.libpic
-2026-09-23 14:57:33.398   184-1215  BufferQueueProducer     surfaceflinger                       E  [com.dawn.libpic/com.dawn.libpic.MainActivity#0](id:b800000012,api:0,p:-1,c:184) disconnect: not connected (req=1)
-2026-09-23 14:57:33.399  6974-7008  libEGL                  com.dawn.libpic                      W  EGLNativeWindowType 0xb40000787c389020 disconnect failed
-2026-09-23 14:57:37.194  6974-6990  com.dawn.libpi          com.dawn.libpic                      I  Background concurrent copying GC freed 17541(1919KB) AllocSpace objects, 2(40KB) LOS objects, 50% free, 22MB/45MB, paused 100us total 348.058ms
-2026-09-23 14:57:37.331  6974-7133  PicApp                  com.dawn.libpic                      D  区域#0: x=76 y=160 w=531 h=794
-2026-09-23 14:57:37.331  6974-7133  PicApp                  com.dawn.libpic                      D  区域#1: x=648 y=160 w=531 h=794
-2026-09-23 14:57:37.332  6974-7133  PicApp                  com.dawn.libpic                      D  区域#2: x=76 y=1000 w=531 h=794
-2026-09-23 14:57:37.332  6974-7133  PicApp                  com.dawn.libpic                      D  区域#3: x=648 y=1000 w=531 h=794
-2026-09-23 14:57:37.405  6974-6974  Compatibil...geReporter com.dawn.libpic                      D  Compat change id reported: 147798919; UID 10117; state: ENABLED
-2026-09-23 14:58:19.864  6974-7133  PicApp                  com.dawn.libpic                      D  区域#0: x=12 y=89 w=268 h=208
-2026-09-23 14:58:19.871  6974-7133  PicApp                  com.dawn.libpic                      D  区域#1: x=12 y=303 w=130 h=209
-2026-09-23 14:58:19.872  6974-7133  PicApp                  com.dawn.libpic                      D  区域#2: x=148 y=303 w=131 h=209
-2026-09-23 15:18:34.471  1419-1419  监听app安装                 com.ztl.helper                       E  com.dawn.libpic
----------------------------- PROCESS STARTED (9118) for package com.dawn.libpic ----------------------------
-2026-09-23 15:18:35.792  9118-9118  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
-2026-09-23 15:18:35.794  9118-9118  NetworkSecurityConfig   com.dawn.libpic                      D  No Network Security Config specified, using platform default
-2026-09-23 15:18:35.967  9118-9118  AppCompatDelegate       com.dawn.libpic                      D  Checking for metadata for AppLocalesMetadataHolderService : Service not found
-2026-09-23 15:18:36.625  9118-9147  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1311; [Func] : base_context_deal_with_version_affairs_rk_ext;
-                                                                                                    arm_release_ver of this mali_so is 'g2p0-01eac0', rk_so_ver is '8@0 '.
-2026-09-23 15:18:36.622  9118-9118  RenderThread            com.dawn.libpic                      I  type=1400 audit(0.0:11564): avc: denied { write } for name="property_service" dev="tmpfs" ino=18402 scontext=u:r:untrusted_app:s0:c117,c256,c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=1 app=com.dawn.libpic
-2026-09-23 15:18:36.625  9118-9147  mali_so                 com.dawn.libpic                      I  [File] : hardware/rockchip/mali_so/driver/product/base/src/mali_base_kbase.c; [Line] : 1327; [Func] : base_context_deal_with_version_affairs_rk_ext;
-                                                                                                    arm_release_vers are match. to set the full mali_ver 'g2p0-01eac0-x-8@0' as value of 'sys.gmali.version'.
-2026-09-23 15:18:36.622  9118-9118  RenderThread            com.dawn.libpic                      I  type=1400 audit(0.0:11565): avc: denied { connectto } for path="/dev/socket/property_service" scontext=u:r:untrusted_app:s0:c117,c256,c512,c768 tcontext=u:r:init:s0 tclass=unix_stream_socket permissive=1 app=com.dawn.libpic
-2026-09-23 15:19:24.492   184-196   BufferQueueProducer     surfaceflinger                       E  [com.dawn.libpic/com.dawn.libpic.MainActivity#0](id:b800000019,api:0,p:-1,c:184) disconnect: not connected (req=1)
-2026-09-23 15:19:24.493  9118-9147  libEGL                  com.dawn.libpic                      W  EGLNativeWindowType 0xb40000787c3a06d0 disconnect failed
-2026-09-23 15:19:26.781  9118-9246  PicApp                  com.dawn.libpic                      D  区域#0: x=76 y=160 w=531 h=794
-2026-09-23 15:19:26.781  9118-9246  PicApp                  com.dawn.libpic                      D  区域#1: x=648 y=160 w=531 h=794
-2026-09-23 15:19:26.781  9118-9246  PicApp                  com.dawn.libpic                      D  区域#2: x=76 y=1000 w=531 h=794
-2026-09-23 15:19:26.782  9118-9246  PicApp                  com.dawn.libpic                      D  区域#3: x=648 y=1000 w=531 h=794
-2026-09-23 15:19:26.882  9118-9118  Compatibil...geReporter com.dawn.libpic                      D  Compat change id reported: 147798919; UID 10117; state: ENABLED
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:387: 错误: 非法的类型开始
+        try (Cursor cursor = getContentResolver().query(
+        ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:388: 错误: 需要';'
+                uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                                                                                  ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:391: 错误: 非法的类型开始
+        if (name == null) name = uri.getLastPathSegment();
+        ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:391: 错误: 需要<标识符>
+        if (name == null) name = uri.getLastPathSegment();
+                ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:391: 错误: 需要<标识符>
+        if (name == null) name = uri.getLastPathSegment();
+                              ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:392: 错误: 非法的类型开始
+        if (name != null) {
+        ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:392: 错误: 需要<标识符>
+        if (name != null) {
+                ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:396: 错误: 非法的类型开始
+        return name != null ? name : "image";
+        ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:396: 错误: 需要<标识符>
+        return name != null ? name : "image";
+                   ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:396: 错误: 需要<标识符>
+        return name != null ? name : "image";
+                                  ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:400: 错误: 需要class, interface或enum
+    protected void onDestroy() {
+              ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:402: 错误: 需要class, interface或enum
+        executor.shutdown();
+        ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:403: 错误: 需要class, interface或enum
+        if (currentBitmap != null) { currentBitmap.recycle(); currentBitmap = null; }
+        ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:403: 错误: 需要class, interface或enum
+        if (currentBitmap != null) { currentBitmap.recycle(); currentBitmap = null; }
+                                                              ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:403: 错误: 需要class, interface或enum
+        if (currentBitmap != null) { currentBitmap.recycle(); currentBitmap = null; }
+                                                                                    ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:404: 错误: 需要class, interface或enum
+        if (currentPreview != null) { currentPreview.recycle(); currentPreview = null; }
+                                                                ^
+Ask Gemini
+
+D:\lib\lib-pic\app\src\main\java\com\dawn\libpic\MainActivity.java:404: 错误: 需要class, interface或enum
+        if (currentPreview != null) { currentPreview.recycle(); currentPreview = null; }
+                                                                                       ^
+Ask Gemini
+
