@@ -44,6 +44,27 @@
         android:text="点“拍照抠图”或“从相册选择”开始"
         android:textSize="12sp" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/enhanceButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:text="增强清晰度" />
+
+        <CheckBox
+            android:id="@+id/upscaleCheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="放大 2×" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/saveMatteButton"
         android:layout_width="match_parent"

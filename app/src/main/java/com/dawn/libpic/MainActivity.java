@@ -20,6 +20,7 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import com.dawn.pic.DetailEnhancer;
 import com.dawn.pic.PortraitMatting;
 
 import java.io.File;
@@ -62,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     private Button cameraButton;
     private Button pickButton;
     private Button saveMatteButton;
+    private Button enhanceButton;
+    private CheckBox upscaleCheck;
     private ProgressBar progressBar;
     private TextView matteInfoText;
 
@@ -108,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
         cameraButton = findViewById(R.id.cameraButton);
         pickButton = findViewById(R.id.pickButton);
         saveMatteButton = findViewById(R.id.saveMatteButton);
+        enhanceButton = findViewById(R.id.enhanceButton);
+        upscaleCheck = findViewById(R.id.upscaleCheck);
         progressBar = findViewById(R.id.progressBar);
         matteInfoText = findViewById(R.id.matteInfoText);
 
@@ -116,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         cameraButton.setOnClickListener(v -> takePhoto());
         pickButton.setOnClickListener(v -> pickImageLauncher.launch(new String[]{"image/*"}));
         saveMatteButton.setOnClickListener(v -> saveMatte());
+        enhanceButton.setOnClickListener(v -> enhanceCurrent());
     }
 
     // ---------------------------------------------------------------- 拍照 / 选图
@@ -172,6 +179,48 @@ public class MainActivity extends AppCompatActivity {
                     setMatteInfo("抠图失败: " + e.getMessage());
                     setUiIdle();
                     Toast.makeText(this, "抠图失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    // ---------------------------------------------------------------- 清晰度增强
+
+    /** 对当前抠图结果做清晰度增强（可选 2× 放大），结果替换预览 */
+    void enhanceCurrent() {
+        if (currentMatte == null) return;
+        final Bitmap source = currentMatte;
+        final int factor = upscaleCheck.isChecked() ? 2 : 1;
+        setUiBusy();
+        setMatteInfo(factor > 1 ? "清晰度增强中（含 2× 放大）…" : "清晰度增强中…");
+        executor.execute(() -> {
+            Bitmap enhanced = null;
+            try {
+                long start = SystemClock.elapsedRealtime();
+                enhanced = DetailEnhancer.enhance(source, 1.0f, 0.6f, factor);
+                long cost = SystemClock.elapsedRealtime() - start;
+                final Bitmap result = enhanced;
+                final int srcW = source.getWidth();
+                final int srcH = source.getHeight();
+                final int dstW = result.getWidth();
+                final int dstH = result.getHeight();
+                runOnUiThread(() -> {
+                    if (currentMatte != null) currentMatte.recycle();
+                    currentMatte = result;
+                    imageView.setImageBitmap(result);
+                    String note = (factor > 1 && dstW == srcW) ? "（原图过大，已跳过放大）" : "";
+                    setMatteInfo(String.format(Locale.US,
+                            "清晰度增强完成：%d×%d → %d×%d，耗时 %d ms%s",
+                            srcW, srcH, dstW, dstH, cost, note));
+                    setUiIdle();
+                    Toast.makeText(this, "清晰度增强完成", Toast.LENGTH_SHORT).show();
+                });
+            } catch (Throwable e) {
+                if (enhanced != null && !enhanced.isRecycled()) enhanced.recycle();
+                Log.e(TAG, "清晰度增强失败", e);
+                runOnUiThread(() -> {
+                    setMatteInfo("增强失败: " + e.getMessage());
+                    setUiIdle();
                 });
             }
         });
@@ -340,6 +389,7 @@ public class MainActivity extends AppCompatActivity {
         cameraButton.setEnabled(false);
         pickButton.setEnabled(false);
         saveMatteButton.setEnabled(false);
+        enhanceButton.setEnabled(false);
     }
 
     private void setUiIdle() {
@@ -347,6 +397,7 @@ public class MainActivity extends AppCompatActivity {
         cameraButton.setEnabled(true);
         pickButton.setEnabled(true);
         saveMatteButton.setEnabled(currentMatte != null);
+        enhanceButton.setEnabled(currentMatte != null);
     }
 
     private void setMatteInfo(String text) {

@@ -52,10 +52,24 @@ public class MainActivityMattingTest {
                 scenario.onActivity(a ->
                         text[0] = ((TextView) a.findViewById(R.id.matteInfoText)).getText().toString());
                 return text[0];
-            }, 60000);
+            }, 60000, "抠图完成", "抠图失败");
 
             assertTrue("抠图未完成，界面提示：" + info, info.startsWith("抠图完成"));
             scenario.onActivity(a -> assertTrue("保存抠图按钮应可用",
+                    ((Button) a.findViewById(R.id.saveMatteButton)).isEnabled()));
+            scenario.onActivity(a -> assertTrue("增强清晰度按钮应可用",
+                    ((Button) a.findViewById(R.id.enhanceButton)).isEnabled()));
+
+            scenario.onActivity(MainActivity::enhanceCurrent);
+            String enhancedInfo = waitFor(() -> {
+                String[] text = new String[1];
+                scenario.onActivity(a ->
+                        text[0] = ((TextView) a.findViewById(R.id.matteInfoText)).getText().toString());
+                return text[0];
+            }, 60000, "清晰度增强完成", "增强失败");
+            assertTrue("清晰度增强未完成，界面提示：" + enhancedInfo,
+                    enhancedInfo.startsWith("清晰度增强完成"));
+            scenario.onActivity(a -> assertTrue("增强后保存按钮仍可用",
                     ((Button) a.findViewById(R.id.saveMatteButton)).isEnabled()));
         }
     }
@@ -76,13 +90,16 @@ public class MainActivityMattingTest {
     }
 
     /** 轮询等待 UI 文本达到终态（成功或失败），超时返回最后一次的文本 */
-    private static String waitFor(Callable<String> reader, long timeoutMs) throws Exception {
+    private static String waitFor(Callable<String> reader, long timeoutMs, String... prefixes)
+            throws Exception {
         long deadline = System.currentTimeMillis() + timeoutMs;
         String text = "";
         while (System.currentTimeMillis() < deadline) {
             text = reader.call();
-            if (text != null && (text.startsWith("抠图完成") || text.startsWith("抠图失败"))) {
-                return text;
+            if (text != null) {
+                for (String prefix : prefixes) {
+                    if (text.startsWith(prefix)) return text;
+                }
             }
             Thread.sleep(200);
         }
