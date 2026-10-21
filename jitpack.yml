@@ -1,2 +1,5 @@
-jdk:
+﻿jdk:
   - openjdk11
+# JitPack 默认执行 gradlew install（AGP 7 已移除该任务），改为发布仓库模块到本地 Maven
+install:
+  - ./gradlew :pic:publishToMavenLocal --no-daemon --stacktrace

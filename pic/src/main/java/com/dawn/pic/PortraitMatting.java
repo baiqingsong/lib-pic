@@ -41,8 +41,8 @@ import ai.onnxruntime.TensorInfo;
  */
 public class PortraitMatting implements Closeable {
 
-    /** assets 中的默认模型文件名（MODNet photographic portrait matting） */
-    public static final String DEFAULT_MODEL_ASSET = "modnet.onnx";
+    /** assets 中的默认模型路径（放在子目录，避免与宿主应用的同名资源冲突） */
+    public static final String DEFAULT_MODEL_ASSET = "portrait_matting/modnet.onnx";
 
     /** 模型训练分辨率，输入张量固定为 512x512（模型本身支持动态尺寸） */
     private static final int DEFAULT_INPUT_SIZE = 512;
@@ -250,7 +250,7 @@ public class PortraitMatting implements Closeable {
      * 把 assets 中的模型解压到应用私有目录，避免每次启动都读 25MB 资源。
      * 文件名带版本号，模型升级时换名即可触发重新解压。
      */
-    private static File ensureModelFile(Context context) throws IOException {
+    private static synchronized File ensureModelFile(Context context) throws IOException {
         File dir = new File(context.getFilesDir(), "models");
         File model = new File(dir, "modnet_v1.onnx");
         if (model.isFile() && model.length() > 0) return model;

@@ -48,14 +48,13 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.baiqingsong'
                 artifactId = 'pic'
-                version = '1.0.0'
+                version = project.findProperty('VERSION_NAME') ?: '1.0.0'
             }
         }
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    // 离线人像抠图（MODNet）推理运行时
+    // 离线人像抠图（MODNet）推理运行时；公共 API 不暴露 ORT 类型，用 implementation 即可
     implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.19.2'
 }

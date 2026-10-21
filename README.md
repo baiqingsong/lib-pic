@@ -16,7 +16,7 @@
 用 **MODNet**（AAAI 2022, trimap-free 人像软分割）ONNX 模型 + **ONNX Runtime** CPU 推理，在设备本地抠出人像，输出透明背景 PNG。
 
 - **完全离线**：不联网、不依赖 Face++ 等第三方人体抠像接口，无调用费用与授权费。
-- **模型随 APK 打包**：`pic/src/main/assets/modnet.onnx`（约 25 MB），首次使用时解压到应用私有目录后复用。
+- **模型随 APK 打包**：`pic/src/main/assets/portrait_matting/modnet.onnx`（约 25 MB），首次使用时解压到应用私有目录后复用。
 - **软边保留**：模型输出为 0~1 的 alpha，经软阈值 + 过渡带平滑后作为遮罩，发丝部分保留半透明。
 
 #### 用法
@@ -63,6 +63,50 @@ new PortraitMatting(context, 384);   // 边长需为 32 的倍数，默认 512�
 - 整图推理、未做人脸检测裁剪：人像在画面中占比过小时边缘精度会下降（可先用 FaceDetector/RetinaFace 裁剪再抠图）。
 - 单人像效果最好；多人或复杂遮挡场景不做实例分离。
 - 输入按模型原生 512×512 处理再上采样，超大图（> 2000 px）的细发丝细节受模型分辨率限制。
+
+## 远程引用（JitPack）
+
+`pic` 模块已配置 `maven-publish`，其他项目可以直接依赖调用，无需拷贝源码：
+
+```gradle
+// settings.gradle 或根 build.gradle 的 repositories
+repositories {
+    google()
+    mavenCentral()                     // onnxruntime-android 来自这里
+    maven { url 'https://jitpack.io' } // 发布好的 pic AAR
+}
+
+dependencies {
+    implementation 'com.github.baiqingsong:pic:<tag>'   // 例如 1.0.0
+}
+```
+
+发布新版本（JitPack 用 git tag 作为版本号）：
+
+```bash
+git tag 1.0.0
+git push origin 1.0.0
+```
+
+首次访问 `https://jitpack.io/com/github/baiqingsong/pic/1.0.0/` 会触发构建并缓存产物，构建日志在 jitpack.io 可查。仓库需公开，或授权 JitPack 访问私有仓库。
+
+**调用方要求**：`minSdk 28`；AGP 7+ / `compileSdk 34`；构建机 JDK 11+（仓库不再写死 `org.gradle.java.home`，本机可在 `~/.gradle/gradle.properties` 指定自己的 JDK）。
+
+**本地先行验证**（不依赖 JitPack）：
+
+```bash
+./gradlew :pic:publishToMavenLocal
+# 再用 mavenLocal() + com.github.baiqingsong:pic:1.0.0
+```
+
+发布产物 AAR 已包含：`classes.jar`、**模型 `assets/portrait_matting/modnet.onnx`**、consumer ProGuard 规则（保留 `com.dawn.pic.**` 与 `ai.onnxruntime.**`，R8 全量混淆实测可用）。
+
+### 离线能力（已验证）
+
+- `pic` 库和 app 都**没有声明 `INTERNET` 权限**，代码中也没有任何 socket/HTTP 调用；
+- 模型随 AAR 打包，首次使用时解压到应用私有目录（`files/models/modnet_v1.onnx`），之后直接复用；
+- 推理全部在本机 CPU 上完成（ONNX Runtime 本地 so），不经过云服务；
+- 实测：设备开启飞行模式（无 WiFi/数据、DNS 不可用）后执行 `./gradlew :app:connectedDebugAndroidTest`，4 个用例全部通过（512 推理 3.4 s / 384 推理 2.2 s），与联网时一致。
 
 ## 测试应用（app 模块）
 
