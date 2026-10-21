@@ -3,7 +3,7 @@
 图片的相关处理
 
 - `pic` 模块：可独立发布的图片处理库（`PngAnalyzer` + `PortraitMatting`）。
-- `app` 模块：验证用的示例应用。
+- `app` 模块：人像抠图测试应用（拍照 / 选图 → 抠图 → 保存透明 PNG）。
 
 ## 功能
 
@@ -64,6 +64,17 @@ new PortraitMatting(context, 384);   // 边长需为 32 的倍数，默认 512�
 - 单人像效果最好；多人或复杂遮挡场景不做实例分离。
 - 输入按模型原生 512×512 处理再上采样，超大图（> 2000 px）的细发丝细节受模型分辨率限制。
 
+## 测试应用（app 模块）
+
+页面只保留抠图相关流程：
+
+- **拍照抠图**：唤起系统相机（`ACTION_IMAGE_CAPTURE` + FileProvider 写入应用缓存），拍完自动抠图；
+- **从相册选择**：选本地图片抠图；
+- 预览区用棋盘格底色显示透明结果，底部显示尺寸与耗时；
+- **保存抠图 PNG**：写入系统相册 `Pictures/LibPic/`（API 29+ 走 MediaStore，**无需存储权限**；API 28 才申请写权限）。
+
+相机照片会按 EXIF 方向自动摆正，长边超过 2048 px 时降采样解码以控制内存。
+
 ## 测试
 
 ```bash
@@ -71,4 +82,4 @@ new PortraitMatting(context, 384);   // 边长需为 32 的倍数，默认 512�
 ./gradlew :app:connectedDebugAndroidTest
 ```
 
-`PortraitMattingTest` 校验模型加载、透明度结果与耗时；`MainActivityMattingTest` 校验示例应用“选图 → 抠图 → 可保存”的完整流程。
+`PortraitMattingTest` 校验模型加载、透明度结果与耗时；`MainActivityMattingTest` 校验“选图 → 抠图 → 可保存”的完整流程，以及相机链路（相机应用可解析 + FileProvider 可用）。

@@ -1,33 +1,27 @@
 package com.dawn.libpic;
 
 import android.Manifest;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.Intent;
+import android.content.ContentValues;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.provider.Settings;
 import android.util.Log;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,424 +30,130 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
-import com.dawn.pic.PngAnalyzer;
 import com.dawn.pic.PortraitMatting;
-
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * 人像抠图测试页：拍照（或选图）→ 离线 MODNet 抠图 → 预览 / 保存透明 PNG。
+ */
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView imageView;
-    private TextView jsonTextView;
-    private Button selectButton;
-    private Button copyButton;
-    private Button saveButton;
-    private Button testButton;
-    private Button composeButton;
-    private Button mattingButton;
-    private Button saveMatteButton;
-    private TextView matteInfoText;
-    private ProgressBar progressBar;
+    private static final String TAG = "PicApp";
+    private static final String FILE_PROVIDER_SUFFIX = ".fileprovider";
 
     private static final int REQ_WRITE_PERMISSION = 101;
 
     // 抠图输入的长边上限，避免超大照片解码时占用过多内存（输出尺寸随之受限）
     private static final int MATTE_MAX_DECODE_SIZE = 2048;
 
-    private Bitmap currentBitmap;
-    private Bitmap currentPreview;
-    private String currentJson;
-    private String currentImageName;
-    private Uri currentSourceUri;
-    private List<int[]> currentAreas;
+    private ImageView imageView;
+    private Button cameraButton;
+    private Button pickButton;
+    private Button saveMatteButton;
+    private ProgressBar progressBar;
+    private TextView matteInfoText;
 
-    // 人像抠图结果（透明背景），保存时使用
     private Bitmap currentMatte;
     private String currentMatteName;
     private PortraitMatting portraitMatting;
     private Drawable normalPreviewBg;
 
-    // 用户从 Settings 授权后自动重试被中断的保存动作
+    // 相机拍照目标
+    private Uri pendingCaptureUri;
+    private String pendingCaptureName;
+
+    // 用户从系统授权弹窗同意后自动重试被中断的保存动作
     private Runnable pendingPermissionAction;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    // OpenDocument 正确授予 MediaDocumentsProvider 访问权限，GetContent 在此 ROM 上会抛 SecurityException
-    private final ActivityResultLauncher<String[]> imagePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onImageSelected);
+    private final ActivityResultLauncher<Uri> takePictureLauncher =
+            registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
+                Uri uri = pendingCaptureUri;
+                String name = pendingCaptureName;
+                pendingCaptureUri = null;
+                pendingCaptureName = null;
+                if (!success || uri == null) {
+                    setMatteInfo("已取消拍照");
+                    return;
+                }
+                matteFromUri(uri, name);
+            });
 
-    // 选人像用于合成预览
-    private final ActivityResultLauncher<String[]> personPickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onPersonSelected);
-
-    // 选图做人像抠图
-    private final ActivityResultLauncher<String[]> mattePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onMatteImageSelected);
+    private final ActivityResultLauncher<String[]> pickImageLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(),
+                    uri -> {
+                        if (uri == null) return;
+                        matteFromUri(uri, getImageName(uri));
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        imageView    = findViewById(R.id.imageView);
-        jsonTextView = findViewById(R.id.jsonTextView);
-        selectButton = findViewById(R.id.selectButton);
-        copyButton   = findViewById(R.id.copyButton);
-        saveButton   = findViewById(R.id.saveButton);
-        testButton   = findViewById(R.id.testButton);
-        composeButton = findViewById(R.id.composeButton);
-        mattingButton = findViewById(R.id.mattingButton);
+        imageView = findViewById(R.id.imageView);
+        cameraButton = findViewById(R.id.cameraButton);
+        pickButton = findViewById(R.id.pickButton);
         saveMatteButton = findViewById(R.id.saveMatteButton);
+        progressBar = findViewById(R.id.progressBar);
         matteInfoText = findViewById(R.id.matteInfoText);
-        progressBar  = findViewById(R.id.progressBar);
 
         normalPreviewBg = imageView.getBackground();
 
-        selectButton.setOnClickListener(v -> imagePickerLauncher.launch(new String[]{"image/*"}));
-        testButton.setOnClickListener(v -> loadTestImage());
-        copyButton.setOnClickListener(v -> copyJson());
-        saveButton.setOnClickListener(v -> saveMasks());
-        composeButton.setOnClickListener(v -> personPickerLauncher.launch(new String[]{"image/*"}));
-        mattingButton.setOnClickListener(v -> mattePickerLauncher.launch(new String[]{"image/*"}));
+        cameraButton.setOnClickListener(v -> takePhoto());
+        pickButton.setOnClickListener(v -> pickImageLauncher.launch(new String[]{"image/*"}));
         saveMatteButton.setOnClickListener(v -> saveMatte());
     }
 
-    private void onImageSelected(Uri uri) {
-        if (uri == null) return;
-        boolean isDouble = ((RadioButton) findViewById(R.id.doubleRadio)).isChecked();
-        String imageName = getImageName(uri);
-        currentSourceUri = uri;
-        setUiBusy();
-        executor.execute(() -> {
-            try {
-                BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap bitmap;
-                try (InputStream is = getContentResolver().openInputStream(uri)) {
-                    bitmap = BitmapFactory.decodeStream(is, null, opts);
-                }
-                if (bitmap == null) throw new IllegalArgumentException("图片解码失败，请确认文件是有效的 PNG 图片");
-                processBitmapAsync(bitmap, isDouble, imageName);
-            } catch (Throwable e) {
-                Log.e("PicApp", "读取图片失败", e);
-                runOnUiThread(() -> showError(e));
-            }
-        });
-    }
+    // ---------------------------------------------------------------- 拍照 / 选图
 
-    private void loadTestImage() {
-        boolean isDouble = ((RadioButton) findViewById(R.id.doubleRadio)).isChecked();
-        setUiBusy();
-        currentSourceUri = null; // 测试图来自 assets，无文件路径
-        executor.execute(() -> {
-            try {
-                BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap bitmap;
-                try (InputStream is = getAssets().open("cs.png")) {
-                    bitmap = BitmapFactory.decodeStream(is, null, opts);
-                }
-                if (bitmap == null) throw new IllegalArgumentException("内置测试图片加载失败");
-                processBitmapAsync(bitmap, isDouble, "cs");
-            } catch (Throwable e) {
-                Log.e("PicApp", "加载测试图片失败", e);
-                runOnUiThread(() -> showError(e));
-            }
-        });
-    }
-
-    // runs on executor thread; all UI ops delegated to runOnUiThread
-    private void processBitmapAsync(Bitmap rawBitmap, boolean isDouble, String imageName) {
+    /** 唤起系统相机，把照片写到应用缓存目录（FileProvider 授权） */
+    private void takePhoto() {
         try {
-            Bitmap bitmap = rawBitmap;
-            if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
-                Bitmap converted = bitmap.copy(Bitmap.Config.ARGB_8888, false);
-                bitmap.recycle();
-                bitmap = converted;
+            File dir = new File(getCacheDir(), "captures");
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new IOException("无法创建拍照缓存目录");
             }
-            List<int[]> areas = PngAnalyzer.findTransparentAreas(bitmap);
-
-            // 诊断：采样中心点和四角的 alpha 值，帮助判断图片是否有透明通道
-            int[] diagPixels = new int[5];
-            int bw = bitmap.getWidth(), bh = bitmap.getHeight();
-            bitmap.getPixels(diagPixels, 0, 1, bw / 2,       bh / 2,       1, 1);
-            bitmap.getPixels(diagPixels, 1, 1, bw / 4,       bh / 4,       1, 1);
-            bitmap.getPixels(diagPixels, 2, 1, bw * 3 / 4,   bh / 4,       1, 1);
-            bitmap.getPixels(diagPixels, 3, 1, bw / 4,       bh * 3 / 4,   1, 1);
-            bitmap.getPixels(diagPixels, 4, 1, bw * 3 / 4,   bh * 3 / 4,   1, 1);
-            Log.d("PicApp", String.format("诊断 %dx%d config=%s areas=%d alpha=[%d,%d,%d,%d,%d]",
-                    bw, bh, bitmap.getConfig(),
-                    areas.size(),
-                    (diagPixels[0] >> 24) & 0xFF,
-                    (diagPixels[1] >> 24) & 0xFF,
-                    (diagPixels[2] >> 24) & 0xFF,
-                    (diagPixels[3] >> 24) & 0xFF,
-                    (diagPixels[4] >> 24) & 0xFF));
-
-            // 输出每个区域坐标便于调试
-            for (int i = 0; i < areas.size(); i++) {
-                int[] a = areas.get(i);
-                Log.d("PicApp", "区域#" + i + ": x=" + a[0] + " y=" + a[1] + " w=" + a[2] + " h=" + a[3]);
-            }
-
-            String json = PngAnalyzer.generateJson(bitmap, areas, isDouble);
-
-            // 构建显示文本：先列出各区域坐标，再输出 JSON
-            StringBuilder display = new StringBuilder();
-            if (areas.isEmpty()) {
-                display.append("未检测到透明区域，请确认图片包含透明镂空");
-            } else {
-                display.append("模式: ").append(isDouble ? "双份" : "单份").append("\n");
-                display.append("检测到 ").append(areas.size()).append(" 个透明区域\n");
-                for (int i = 0; i < areas.size(); i++) {
-                    int[] a = areas.get(i);
-                    display.append("  #").append(i)
-                           .append(": x=").append(a[0]).append(" y=").append(a[1])
-                           .append(" w=").append(a[2]).append(" h=").append(a[3]).append("\n");
-                }
-                display.append("\n").append(json);
-            }
-
-            Bitmap preview = PngAnalyzer.drawDebugOverlay(bitmap, areas);
-            final Bitmap finalBitmap = bitmap;
-            final String displayText = display.toString();
-            runOnUiThread(() -> {
-                if (currentBitmap != null) currentBitmap.recycle();
-                if (currentPreview != null) currentPreview.recycle();
-                currentBitmap = finalBitmap;
-                currentPreview = preview;
-                currentAreas  = areas;
-                currentJson   = json;
-                currentImageName = imageName;
-                imageView.setBackground(normalPreviewBg);
-                imageView.setImageBitmap(preview);
-                jsonTextView.setText(displayText);
-                setUiIdle(!areas.isEmpty());
-                Toast.makeText(this, "找到 " + areas.size() + " 个透明区域", Toast.LENGTH_SHORT).show();
-            });
+            String name = "camera_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+            File file = new File(dir, name + ".jpg");
+            Uri uri = FileProvider.getUriForFile(this, getPackageName() + FILE_PROVIDER_SUFFIX, file);
+            pendingCaptureUri = uri;
+            pendingCaptureName = name;
+            takePictureLauncher.launch(uri);
         } catch (Throwable e) {
-            Log.e("PicApp", "处理图片失败", e);
-            runOnUiThread(() -> showError(e));
+            Log.e(TAG, "启动相机失败", e);
+            Toast.makeText(this, "启动相机失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    private void setUiBusy() {
-        progressBar.setVisibility(View.VISIBLE);
-        selectButton.setEnabled(false);
-        testButton.setEnabled(false);
-        copyButton.setEnabled(false);
-        saveButton.setEnabled(false);
-        composeButton.setEnabled(false);
-        mattingButton.setEnabled(false);
-        saveMatteButton.setEnabled(false);
-    }
+    // ---------------------------------------------------------------- 抠图
 
-    private void setUiIdle(boolean hasResult) {
-        progressBar.setVisibility(View.GONE);
-        selectButton.setEnabled(true);
-        testButton.setEnabled(true);
-        copyButton.setEnabled(hasResult);
-        saveButton.setEnabled(hasResult);
-        composeButton.setEnabled(hasResult);
-        mattingButton.setEnabled(true);
-        saveMatteButton.setEnabled(currentMatte != null);
-    }
-
-    private void showError(Throwable e) {
-        jsonTextView.setText("处理失败: " + e.getClass().getSimpleName() + "\n" + e.getMessage());
-        setUiIdle(false);
-    }
-
-    private void copyJson() {
-        if (currentJson == null) return;
-        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(ClipData.newPlainText("JSON", currentJson));
-        Toast.makeText(this, "JSON 已复制到剪贴板", Toast.LENGTH_SHORT).show();
-    }
-
-    private void saveMasks() {
-        if (currentBitmap == null || currentAreas == null || currentImageName == null) return;
-        if (!hasStoragePermission()) {
-            Log.d("PicApp", "saveMasks: 无存储权限，申请中");
-            pendingPermissionAction = this::saveMasks;
-            requestStoragePermission();
-            return;
-        }
-        final String imageName = currentImageName;
-        executor.execute(() -> {
-            try {
-                File outputDir = resolveOutputDir();
-                Log.d("PicApp", "saveMasks: outputDir=" + outputDir.getAbsolutePath());
-                List<String> paths = PngAnalyzer.saveTransparentMasks(
-                        currentBitmap, currentAreas, outputDir, imageName);
-                Log.d("PicApp", "saveMasks: 切图已保存 " + paths.size() + " 张 → " + paths);
-                PngAnalyzer.savePicJson(outputDir, imageName, currentJson);
-                Log.d("PicApp", "saveMasks: pic.json 已更新");
-                runOnUiThread(() ->
-                        Toast.makeText(this,
-                                "已保存 " + paths.size() + " 张切图，并更新 pic.json\n路径：" + outputDir.getAbsolutePath(),
-                                Toast.LENGTH_LONG).show()
-                );
-            } catch (Throwable e) {
-                Log.e("PicApp", "saveMasks: 保存失败", e);
-                runOnUiThread(() ->
-                        Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
-            }
-        });
-    }
-
-    /** 优先保存到源图同目录，无法解析时回退到 Download/LibPic/ */
-    private File resolveOutputDir() {
-        if (currentSourceUri != null) {
-            File sourceDir = resolveSourceDirectory(currentSourceUri);
-            if (sourceDir != null && sourceDir.isDirectory()) return sourceDir;
-        }
-        return new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS), "LibPic");
-    }
-
-    /** 解析 Uri 对应的真实目录；支持 ExternalStorageProvider 和 MediaStore */
-    private File resolveSourceDirectory(Uri uri) {
-        // ExternalStorageProvider：content://com.android.externalstorage.documents/document/primary:path/file.png
-        if ("com.android.externalstorage.documents".equals(uri.getAuthority())) {
-            String docId = DocumentsContract.getDocumentId(uri);
-            String[] parts = docId.split(":", 2);
-            if (parts.length == 2 && "primary".equalsIgnoreCase(parts[0])) {
-                return new File(Environment.getExternalStorageDirectory(), parts[1]).getParentFile();
-            }
-        }
-        // 通用回退：查询 DATA 列（部分中新机型上可能返回 null）
-        try (Cursor c = getContentResolver().query(uri,
-                new String[]{MediaStore.MediaColumns.DATA}, null, null, null)) {
-            if (c != null && c.moveToFirst()) {
-                String path = c.getString(0);
-                if (path != null && !path.isEmpty()) return new File(path).getParentFile();
-            }
-        } catch (Exception ignored) {}
-        return null;
-    }
-
-    private boolean hasStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return Environment.isExternalStorageManager();
-        }
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Toast.makeText(this, "请开启『所有文件访问』权限，完成后返回应用重试", Toast.LENGTH_LONG).show();
-            try {
-                startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
-                        Uri.parse("package:" + getPackageName())));
-            } catch (Exception e) {
-                startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
-            }
-        } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_WRITE_PERMISSION);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_WRITE_PERMISSION) {
-            Runnable action = pendingPermissionAction;
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                pendingPermissionAction = null;
-                if (action != null) action.run();
-            } else {
-                pendingPermissionAction = null;
-                Toast.makeText(this, "存储权限被拒绝，无法保存", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // API 30+ 用户从 Settings 授权后返回自动重试
-        if (pendingPermissionAction != null && hasStoragePermission()) {
-            Runnable action = pendingPermissionAction;
-            pendingPermissionAction = null;
-            action.run();
-        }
-    }
-
-    /** 从 Uri 提取文件名（不含后缀） */
-    private String getImageName(Uri uri) {
-        String name = null;
-        try (Cursor cursor = getContentResolver().query(
-                uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
-            if (cursor != null && cursor.moveToFirst()) name = cursor.getString(0);
-        }
-        if (name == null) name = uri.getLastPathSegment();
-        if (name != null) {
-            int dot = name.lastIndexOf('.');
-            if (dot > 0) name = name.substring(0, dot);
-        }
-        return name != null ? name : "image";
-    }
-
-    /** 用户选定人像后，按当前 JSON 合成预览并显示 */
-    private void onPersonSelected(Uri uri) {
-        if (uri == null || currentBitmap == null || currentJson == null) return;
-        setUiBusy();
-        executor.execute(() -> {
-            try {
-                Bitmap person = decodeBitmap(uri, "人像解码失败");
-
-                List<Bitmap> photos = new ArrayList<>();
-                // 当前演示用同一张人像填满所有槽位
-                int photograph = new JSONObject(currentJson).optInt("photograph", 1);
-                for (int i = 0; i < Math.max(photograph, 1); i++) photos.add(person);
-
-                Bitmap composed = PngAnalyzer.compositePhotos(currentBitmap, currentJson, photos);
-                person.recycle();
-
-                runOnUiThread(() -> {
-                    imageView.setBackground(normalPreviewBg);
-                    imageView.setImageBitmap(composed);
-                    setUiIdle(true);
-                    Toast.makeText(this, "合成预览完成", Toast.LENGTH_SHORT).show();
-                });
-            } catch (Throwable e) {
-                Log.e("PicApp", "合成预览失败", e);
-                runOnUiThread(() -> { showError(e); setUiIdle(currentJson != null); });
-            }
-        });
-    }
-
-    // ---------------------------------------------------------------- 人像抠图
-
-    /** 用户选定图片后，用离线 MODNet 模型抠出人像并预览透明背景 */
-    void onMatteImageSelected(Uri uri) {
-        if (uri == null) return;
-        final String imageName = getImageName(uri);
-        currentSourceUri = uri;
+    /** 对指定图片执行抠图，结果替换预览；包内可见便于测试直接调用 */
+    void matteFromUri(Uri uri, String imageName) {
         setUiBusy();
         setMatteInfo("抠图中…（首次使用需解压模型，请稍候）");
         executor.execute(() -> {
             try {
-                Bitmap source = decodeBitmap(uri, "图片解码失败", MATTE_MAX_DECODE_SIZE);
+                Bitmap source = decodeBitmap(uri);
                 if (portraitMatting == null) portraitMatting = new PortraitMatting(this);
                 long start = SystemClock.elapsedRealtime();
                 Bitmap matte = portraitMatting.matte(source);
                 long cost = SystemClock.elapsedRealtime() - start;
-                int srcW = source.getWidth(), srcH = source.getHeight();
+                int srcW = source.getWidth();
+                int srcH = source.getHeight();
                 source.recycle();
 
                 runOnUiThread(() -> {
@@ -463,83 +163,194 @@ public class MainActivity extends AppCompatActivity {
                     imageView.setBackground(createCheckerDrawable());
                     imageView.setImageBitmap(matte);
                     setMatteInfo(String.format("抠图完成：%d×%d，耗时 %d ms", srcW, srcH, cost));
-                    setUiIdle(true);
+                    setUiIdle();
                     Toast.makeText(this, "抠图完成，可保存透明 PNG", Toast.LENGTH_SHORT).show();
                 });
             } catch (Throwable e) {
-                Log.e("PicApp", "人像抠图失败", e);
+                Log.e(TAG, "人像抠图失败", e);
                 runOnUiThread(() -> {
                     setMatteInfo("抠图失败: " + e.getMessage());
-                    setUiIdle(false);
+                    setUiIdle();
                     Toast.makeText(this, "抠图失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
     }
 
-    /** 保存抠图结果为透明背景 PNG */
+    // ---------------------------------------------------------------- 保存
+
     private void saveMatte() {
-        if (currentMatte == null || currentMatteName == null) return;
-        if (!hasStoragePermission()) {
+        if (currentMatte == null) return;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && !hasStoragePermission()) {
             pendingPermissionAction = this::saveMatte;
             requestStoragePermission();
             return;
         }
         final Bitmap matte = currentMatte;
-        final String fileName = currentMatteName + "_matte.png";
+        final String fileName = (currentMatteName == null ? "matte" : currentMatteName) + "_matte.png";
         executor.execute(() -> {
             try {
-                File outputDir = resolveOutputDir();
-                if (!outputDir.exists() && !outputDir.mkdirs()) {
-                    throw new IOException("无法创建输出目录: " + outputDir.getAbsolutePath());
-                }
-                File outFile = new File(outputDir, fileName);
-                try (FileOutputStream fos = new FileOutputStream(outFile)) {
-                    if (!matte.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
-                        throw new IOException("PNG 编码失败");
-                    }
-                }
-                Log.d("PicApp", "saveMatte: " + outFile.getAbsolutePath());
+                String location = writePng(matte, fileName);
+                Log.d(TAG, "saveMatte: " + location);
                 runOnUiThread(() -> Toast.makeText(this,
-                        "抠图已保存：" + outFile.getAbsolutePath(), Toast.LENGTH_LONG).show());
+                        "已保存：" + location, Toast.LENGTH_LONG).show());
             } catch (Throwable e) {
-                Log.e("PicApp", "保存抠图失败", e);
+                Log.e(TAG, "保存抠图失败", e);
                 runOnUiThread(() -> Toast.makeText(this,
                         "保存失败: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
     }
 
-    private void setMatteInfo(String text) {
-        matteInfoText.setText(text);
+    /** 写入系统相册 Pictures/LibPic，返回便于提示的相对路径或绝对路径 */
+    private String writePng(Bitmap bitmap, String fileName) throws IOException {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            values.put(MediaStore.Images.Media.RELATIVE_PATH,
+                    Environment.DIRECTORY_PICTURES + "/LibPic");
+            values.put(MediaStore.Images.Media.IS_PENDING, 1);
+
+            Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+            Uri uri = getContentResolver().insert(collection, values);
+            if (uri == null) throw new IOException("无法在相册中创建文件");
+            try (OutputStream os = getContentResolver().openOutputStream(uri)) {
+                if (os == null || !bitmap.compress(Bitmap.CompressFormat.PNG, 100, os)) {
+                    throw new IOException("PNG 编码失败");
+                }
+            } catch (IOException e) {
+                getContentResolver().delete(uri, null, null);
+                throw e;
+            }
+            values.clear();
+            values.put(MediaStore.Images.Media.IS_PENDING, 0);
+            getContentResolver().update(uri, values, null, null);
+            return Environment.DIRECTORY_PICTURES + "/LibPic/" + fileName;
+        }
+
+        File dir = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "LibPic");
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IOException("无法创建目录: " + dir.getAbsolutePath());
+        }
+        File outFile = new File(dir, fileName);
+        try (FileOutputStream fos = new FileOutputStream(outFile)) {
+            if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
+                throw new IOException("PNG 编码失败");
+            }
+        }
+        return outFile.getAbsolutePath();
     }
 
-    private Bitmap decodeBitmap(Uri uri, String errorMessage) throws IOException {
-        return decodeBitmap(uri, errorMessage, 0);
-    }
+    // ---------------------------------------------------------------- 图片解码
 
-    /**
-     * @param maxSize 长边上限，超过时按 2 的幂降采样；传 0 表示按原尺寸解码
-     */
-    private Bitmap decodeBitmap(Uri uri, String errorMessage, int maxSize) throws IOException {
+    /** 按长边上限降采样解码，并按 EXIF 方向摆正（相机照片常带旋转信息） */
+    private Bitmap decodeBitmap(Uri uri) throws IOException {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        try (InputStream is = openStream(uri)) {
+            BitmapFactory.decodeStream(is, null, bounds);
+        }
+        int sample = 1;
+        if (bounds.outWidth > 0 && bounds.outHeight > 0) {
+            while (Math.max(bounds.outWidth, bounds.outHeight) / sample > MATTE_MAX_DECODE_SIZE) {
+                sample *= 2;
+            }
+        }
+
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        if (maxSize > 0) {
-            BitmapFactory.Options bounds = new BitmapFactory.Options();
-            bounds.inJustDecodeBounds = true;
-            try (InputStream is = getContentResolver().openInputStream(uri)) {
-                BitmapFactory.decodeStream(is, null, bounds);
-            }
-            int sample = 1;
-            while (Math.max(bounds.outWidth, bounds.outHeight) / sample > maxSize) sample *= 2;
-            opts.inSampleSize = sample;
-        }
+        opts.inSampleSize = sample;
         Bitmap bitmap;
-        try (InputStream is = getContentResolver().openInputStream(uri)) {
+        try (InputStream is = openStream(uri)) {
             bitmap = BitmapFactory.decodeStream(is, null, opts);
         }
-        if (bitmap == null) throw new IllegalArgumentException(errorMessage);
+        if (bitmap == null) throw new IOException("图片解码失败");
+
+        int rotation = readExifRotation(uri);
+        if (rotation != 0) {
+            Bitmap rotated = rotateBitmap(bitmap, rotation);
+            bitmap.recycle();
+            bitmap = rotated;
+        }
         return bitmap;
+    }
+
+    private InputStream openStream(Uri uri) throws IOException {
+        InputStream is = getContentResolver().openInputStream(uri);
+        if (is == null) throw new IOException("无法读取图片: " + uri);
+        return is;
+    }
+
+    private int readExifRotation(Uri uri) {
+        try (InputStream is = openStream(uri)) {
+            int orientation = new ExifInterface(is)
+                    .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    return 90;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    return 180;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    return 270;
+                default:
+                    return 0;
+            }
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private static Bitmap rotateBitmap(Bitmap src, int degrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degrees);
+        return Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), matrix, true);
+    }
+
+    // ---------------------------------------------------------------- 权限（仅 API 28 保存需要）
+
+    private boolean hasStoragePermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestStoragePermission() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQ_WRITE_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQ_WRITE_PERMISSION) return;
+        Runnable action = pendingPermissionAction;
+        pendingPermissionAction = null;
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (action != null) action.run();
+        } else {
+            Toast.makeText(this, "存储权限被拒绝，无法保存", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ---------------------------------------------------------------- UI
+
+    private void setUiBusy() {
+        progressBar.setVisibility(View.VISIBLE);
+        cameraButton.setEnabled(false);
+        pickButton.setEnabled(false);
+        saveMatteButton.setEnabled(false);
+    }
+
+    private void setUiIdle() {
+        progressBar.setVisibility(View.GONE);
+        cameraButton.setEnabled(true);
+        pickButton.setEnabled(true);
+        saveMatteButton.setEnabled(currentMatte != null);
+    }
+
+    private void setMatteInfo(String text) {
+        matteInfoText.setText(text);
     }
 
     /** 棋盘格背景，用于预览透明区域 */
@@ -559,6 +370,22 @@ public class MainActivity extends AppCompatActivity {
         return drawable;
     }
 
+    /** 从 Uri 提取文件名（不含后缀） */
+    private String getImageName(Uri uri) {
+        String name = null;
+        try (android.database.Cursor cursor = getContentResolver().query(
+                uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) name = cursor.getString(0);
+        } catch (Exception ignored) {
+        }
+        if (name == null) name = uri.getLastPathSegment();
+        if (name != null) {
+            int dot = name.lastIndexOf('.');
+            if (dot > 0) name = name.substring(0, dot);
+        }
+        return name != null ? name : "matte";
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -567,9 +394,9 @@ public class MainActivity extends AppCompatActivity {
             portraitMatting.close();
             portraitMatting = null;
         }
-        if (currentMatte != null) { currentMatte.recycle(); currentMatte = null; }
-        if (currentBitmap != null) { currentBitmap.recycle(); currentBitmap = null; }
-        if (currentPreview != null) { currentPreview.recycle(); currentPreview = null; }
+        if (currentMatte != null) {
+            currentMatte.recycle();
+            currentMatte = null;
+        }
     }
 }
-

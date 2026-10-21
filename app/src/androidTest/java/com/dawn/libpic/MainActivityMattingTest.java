@@ -1,12 +1,16 @@
 package com.dawn.libpic;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.core.content.FileProvider;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -41,7 +45,7 @@ public class MainActivityMattingTest {
         final Uri uri = Uri.fromFile(photo);
 
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
-            scenario.onActivity(activity -> activity.onMatteImageSelected(uri));
+            scenario.onActivity(activity -> activity.matteFromUri(uri, "ui_portrait_sample"));
 
             String info = waitFor(() -> {
                 String[] text = new String[1];
@@ -54,6 +58,21 @@ public class MainActivityMattingTest {
             scenario.onActivity(a -> assertTrue("保存抠图按钮应可用",
                     ((Button) a.findViewById(R.id.saveMatteButton)).isEnabled()));
         }
+    }
+
+    /** 相机拍照链路：系统有相机应用，且 FileProvider 能生成可写 Uri */
+    @Test
+    public void cameraCaptureIsWiredUp() {
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        assertTrue("设备上没有可处理拍照的应用", intent.resolveActivity(target.getPackageManager()) != null);
+
+        File dir = new File(target.getCacheDir(), "captures");
+        assertTrue("无法创建拍照缓存目录", dir.exists() || dir.mkdirs());
+        Uri uri = FileProvider.getUriForFile(target,
+                target.getPackageName() + ".fileprovider", new File(dir, "probe.jpg"));
+        assertEquals("content", uri.getScheme());
     }
 
     /** 轮询等待 UI 文本达到终态（成功或失败），超时返回最后一次的文本 */

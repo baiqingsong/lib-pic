@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 拍照结果临时写入应用缓存目录，避免申请存储权限 -->
+    <cache-path
+        name="captures"
+        path="captures/" />
+</paths>
