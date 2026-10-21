@@ -56,4 +56,6 @@ afterEvaluate {
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
+    // 离线人像抠图（MODNet）推理运行时
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.19.2'
 }

@@ -46,6 +46,27 @@
         android:enabled="false"
         android:text="选人像并合成预览" />
 
+    <Button
+        android:id="@+id/mattingButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="人像抠图（去背景）" />
+
+    <Button
+        android:id="@+id/saveMatteButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:text="保存抠图 PNG（透明背景）" />
+
+    <TextView
+        android:id="@+id/matteInfoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:textSize="12sp" />
+
     <!-- 进度条（处理时显示） -->
     <ProgressBar
         android:id="@+id/progressBar"

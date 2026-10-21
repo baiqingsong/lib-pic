@@ -9,9 +9,13 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
@@ -34,10 +38,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.dawn.pic.PngAnalyzer;
+import com.dawn.pic.PortraitMatting;
 
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +60,15 @@ public class MainActivity extends AppCompatActivity {
     private Button saveButton;
     private Button testButton;
     private Button composeButton;
+    private Button mattingButton;
+    private Button saveMatteButton;
+    private TextView matteInfoText;
     private ProgressBar progressBar;
 
     private static final int REQ_WRITE_PERMISSION = 101;
+
+    // 抠图输入的长边上限，避免超大照片解码时占用过多内存（输出尺寸随之受限）
+    private static final int MATTE_MAX_DECODE_SIZE = 2048;
 
     private Bitmap currentBitmap;
     private Bitmap currentPreview;
@@ -64,8 +77,14 @@ public class MainActivity extends AppCompatActivity {
     private Uri currentSourceUri;
     private List<int[]> currentAreas;
 
-    // 用户从 Settings 授权后自动重试保存
-    private boolean pendingSave = false;
+    // 人像抠图结果（透明背景），保存时使用
+    private Bitmap currentMatte;
+    private String currentMatteName;
+    private PortraitMatting portraitMatting;
+    private Drawable normalPreviewBg;
+
+    // 用户从 Settings 授权后自动重试被中断的保存动作
+    private Runnable pendingPermissionAction;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -76,6 +95,10 @@ public class MainActivity extends AppCompatActivity {
     // 选人像用于合成预览
     private final ActivityResultLauncher<String[]> personPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onPersonSelected);
+
+    // 选图做人像抠图
+    private final ActivityResultLauncher<String[]> mattePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.OpenDocument(), this::onMatteImageSelected);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,13 +112,20 @@ public class MainActivity extends AppCompatActivity {
         saveButton   = findViewById(R.id.saveButton);
         testButton   = findViewById(R.id.testButton);
         composeButton = findViewById(R.id.composeButton);
+        mattingButton = findViewById(R.id.mattingButton);
+        saveMatteButton = findViewById(R.id.saveMatteButton);
+        matteInfoText = findViewById(R.id.matteInfoText);
         progressBar  = findViewById(R.id.progressBar);
+
+        normalPreviewBg = imageView.getBackground();
 
         selectButton.setOnClickListener(v -> imagePickerLauncher.launch(new String[]{"image/*"}));
         testButton.setOnClickListener(v -> loadTestImage());
         copyButton.setOnClickListener(v -> copyJson());
         saveButton.setOnClickListener(v -> saveMasks());
         composeButton.setOnClickListener(v -> personPickerLauncher.launch(new String[]{"image/*"}));
+        mattingButton.setOnClickListener(v -> mattePickerLauncher.launch(new String[]{"image/*"}));
+        saveMatteButton.setOnClickListener(v -> saveMatte());
     }
 
     private void onImageSelected(Uri uri) {
@@ -205,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
                 currentAreas  = areas;
                 currentJson   = json;
                 currentImageName = imageName;
+                imageView.setBackground(normalPreviewBg);
                 imageView.setImageBitmap(preview);
                 jsonTextView.setText(displayText);
                 setUiIdle(!areas.isEmpty());
@@ -223,6 +254,8 @@ public class MainActivity extends AppCompatActivity {
         copyButton.setEnabled(false);
         saveButton.setEnabled(false);
         composeButton.setEnabled(false);
+        mattingButton.setEnabled(false);
+        saveMatteButton.setEnabled(false);
     }
 
     private void setUiIdle(boolean hasResult) {
@@ -232,6 +265,8 @@ public class MainActivity extends AppCompatActivity {
         copyButton.setEnabled(hasResult);
         saveButton.setEnabled(hasResult);
         composeButton.setEnabled(hasResult);
+        mattingButton.setEnabled(true);
+        saveMatteButton.setEnabled(currentMatte != null);
     }
 
     private void showError(Throwable e) {
@@ -250,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
         if (currentBitmap == null || currentAreas == null || currentImageName == null) return;
         if (!hasStoragePermission()) {
             Log.d("PicApp", "saveMasks: 无存储权限，申请中");
-            pendingSave = true;
+            pendingPermissionAction = this::saveMasks;
             requestStoragePermission();
             return;
         }
@@ -336,10 +371,12 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_WRITE_PERMISSION) {
+            Runnable action = pendingPermissionAction;
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                saveMasks();
+                pendingPermissionAction = null;
+                if (action != null) action.run();
             } else {
-                pendingSave = false;
+                pendingPermissionAction = null;
                 Toast.makeText(this, "存储权限被拒绝，无法保存", Toast.LENGTH_SHORT).show();
             }
         }
@@ -349,9 +386,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // API 30+ 用户从 Settings 授权后返回自动重试
-        if (pendingSave && hasStoragePermission()) {
-            pendingSave = false;
-            saveMasks();
+        if (pendingPermissionAction != null && hasStoragePermission()) {
+            Runnable action = pendingPermissionAction;
+            pendingPermissionAction = null;
+            action.run();
         }
     }
 
@@ -376,13 +414,7 @@ public class MainActivity extends AppCompatActivity {
         setUiBusy();
         executor.execute(() -> {
             try {
-                BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap person;
-                try (InputStream is = getContentResolver().openInputStream(uri)) {
-                    person = BitmapFactory.decodeStream(is, null, opts);
-                }
-                if (person == null) throw new IllegalArgumentException("人像解码失败");
+                Bitmap person = decodeBitmap(uri, "人像解码失败");
 
                 List<Bitmap> photos = new ArrayList<>();
                 // 当前演示用同一张人像填满所有槽位
@@ -393,6 +425,7 @@ public class MainActivity extends AppCompatActivity {
                 person.recycle();
 
                 runOnUiThread(() -> {
+                    imageView.setBackground(normalPreviewBg);
                     imageView.setImageBitmap(composed);
                     setUiIdle(true);
                     Toast.makeText(this, "合成预览完成", Toast.LENGTH_SHORT).show();
@@ -404,10 +437,137 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // ---------------------------------------------------------------- 人像抠图
+
+    /** 用户选定图片后，用离线 MODNet 模型抠出人像并预览透明背景 */
+    void onMatteImageSelected(Uri uri) {
+        if (uri == null) return;
+        final String imageName = getImageName(uri);
+        currentSourceUri = uri;
+        setUiBusy();
+        setMatteInfo("抠图中…（首次使用需解压模型，请稍候）");
+        executor.execute(() -> {
+            try {
+                Bitmap source = decodeBitmap(uri, "图片解码失败", MATTE_MAX_DECODE_SIZE);
+                if (portraitMatting == null) portraitMatting = new PortraitMatting(this);
+                long start = SystemClock.elapsedRealtime();
+                Bitmap matte = portraitMatting.matte(source);
+                long cost = SystemClock.elapsedRealtime() - start;
+                int srcW = source.getWidth(), srcH = source.getHeight();
+                source.recycle();
+
+                runOnUiThread(() -> {
+                    if (currentMatte != null) currentMatte.recycle();
+                    currentMatte = matte;
+                    currentMatteName = imageName;
+                    imageView.setBackground(createCheckerDrawable());
+                    imageView.setImageBitmap(matte);
+                    setMatteInfo(String.format("抠图完成：%d×%d，耗时 %d ms", srcW, srcH, cost));
+                    setUiIdle(true);
+                    Toast.makeText(this, "抠图完成，可保存透明 PNG", Toast.LENGTH_SHORT).show();
+                });
+            } catch (Throwable e) {
+                Log.e("PicApp", "人像抠图失败", e);
+                runOnUiThread(() -> {
+                    setMatteInfo("抠图失败: " + e.getMessage());
+                    setUiIdle(false);
+                    Toast.makeText(this, "抠图失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    /** 保存抠图结果为透明背景 PNG */
+    private void saveMatte() {
+        if (currentMatte == null || currentMatteName == null) return;
+        if (!hasStoragePermission()) {
+            pendingPermissionAction = this::saveMatte;
+            requestStoragePermission();
+            return;
+        }
+        final Bitmap matte = currentMatte;
+        final String fileName = currentMatteName + "_matte.png";
+        executor.execute(() -> {
+            try {
+                File outputDir = resolveOutputDir();
+                if (!outputDir.exists() && !outputDir.mkdirs()) {
+                    throw new IOException("无法创建输出目录: " + outputDir.getAbsolutePath());
+                }
+                File outFile = new File(outputDir, fileName);
+                try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                    if (!matte.compress(Bitmap.CompressFormat.PNG, 100, fos)) {
+                        throw new IOException("PNG 编码失败");
+                    }
+                }
+                Log.d("PicApp", "saveMatte: " + outFile.getAbsolutePath());
+                runOnUiThread(() -> Toast.makeText(this,
+                        "抠图已保存：" + outFile.getAbsolutePath(), Toast.LENGTH_LONG).show());
+            } catch (Throwable e) {
+                Log.e("PicApp", "保存抠图失败", e);
+                runOnUiThread(() -> Toast.makeText(this,
+                        "保存失败: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        });
+    }
+
+    private void setMatteInfo(String text) {
+        matteInfoText.setText(text);
+    }
+
+    private Bitmap decodeBitmap(Uri uri, String errorMessage) throws IOException {
+        return decodeBitmap(uri, errorMessage, 0);
+    }
+
+    /**
+     * @param maxSize 长边上限，超过时按 2 的幂降采样；传 0 表示按原尺寸解码
+     */
+    private Bitmap decodeBitmap(Uri uri, String errorMessage, int maxSize) throws IOException {
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        if (maxSize > 0) {
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            try (InputStream is = getContentResolver().openInputStream(uri)) {
+                BitmapFactory.decodeStream(is, null, bounds);
+            }
+            int sample = 1;
+            while (Math.max(bounds.outWidth, bounds.outHeight) / sample > maxSize) sample *= 2;
+            opts.inSampleSize = sample;
+        }
+        Bitmap bitmap;
+        try (InputStream is = getContentResolver().openInputStream(uri)) {
+            bitmap = BitmapFactory.decodeStream(is, null, opts);
+        }
+        if (bitmap == null) throw new IllegalArgumentException(errorMessage);
+        return bitmap;
+    }
+
+    /** 棋盘格背景，用于预览透明区域 */
+    private Drawable createCheckerDrawable() {
+        int cell = 12;
+        int size = cell * 2;
+        int[] pixels = new int[size * size];
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                boolean dark = ((x / cell) + (y / cell)) % 2 == 1;
+                pixels[y * size + x] = dark ? 0xFFCCCCCC : 0xFFFFFFFF;
+            }
+        }
+        Bitmap tile = Bitmap.createBitmap(pixels, size, size, Bitmap.Config.ARGB_8888);
+        BitmapDrawable drawable = new BitmapDrawable(getResources(), tile);
+        drawable.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
+        return drawable;
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         executor.shutdown();
+        if (portraitMatting != null) {
+            portraitMatting.close();
+            portraitMatting = null;
+        }
+        if (currentMatte != null) { currentMatte.recycle(); currentMatte = null; }
         if (currentBitmap != null) { currentBitmap.recycle(); currentBitmap = null; }
         if (currentPreview != null) { currentPreview.recycle(); currentPreview = null; }
     }
